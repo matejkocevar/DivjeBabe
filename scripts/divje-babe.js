@@ -27,7 +27,7 @@ var lastMouseX = null;
 var lastMouseY = null;
 const mouseSensitivity = 0.5;
 
-// Variables for storing current position and speed
+// Variables for storing current position and walkingSpeed
 let pitch = 0;
 let pitchRate = 0;
 let yaw = 0;
@@ -35,7 +35,9 @@ let yawRate = 0;
 let xPosition = 0;
 let yPosition = 0.4;
 let zPosition = 0;
-let speed = 0;
+let walkingSpeed = 0.003;
+let moveForward = 0;
+let moveLeft = 0;
 
 // Used to make us "jog" up and down as we move forward.
 let joggingAngle = 0;
@@ -348,9 +350,9 @@ function animate() {
     if (lastTime !== 0) {
         const elapsed = timeNow - lastTime;
 
-        if (speed !== 0) {
-            xPosition -= Math.sin(degToRad(yaw)) * speed * elapsed;
-            zPosition -= Math.cos(degToRad(yaw)) * speed * elapsed;
+        if (moveForward !== 0 || moveLeft != 0) {
+            xPosition -= Math.sin(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed;
+            zPosition -= Math.cos(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed;
 
             joggingAngle += elapsed * 0.6; // 0.6 "fiddle factor" - makes it feel more realistic :-)
             yPosition = Math.sin(degToRad(joggingAngle)) / 20 + 0.4
@@ -398,22 +400,22 @@ function handleKeys() {
 
     if (currentlyPressedKeys[37] || currentlyPressedKeys[65]) {
         // Left cursor key or A
-        yawRate = 0.1;
+        moveLeft = 1;
     } else if (currentlyPressedKeys[39] || currentlyPressedKeys[68]) {
         // Right cursor key or D
-        yawRate = -0.1;
+        moveLeft = -1;
     } else {
-        yawRate = 0;
+        moveLeft = 0;
     }
 
     if (currentlyPressedKeys[38] || currentlyPressedKeys[87]) {
         // Up cursor key or W
-        speed = 0.003;
+        moveForward = 1;
     } else if (currentlyPressedKeys[40] || currentlyPressedKeys[83]) {
         // Down cursor key
-        speed = -0.003;
+        moveForward = -1;
     } else {
-        speed = 0;
+        moveForward = 0;
     }
 }
 
