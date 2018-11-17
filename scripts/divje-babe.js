@@ -523,10 +523,12 @@ function setCanvasSize() {
 function pausedToogle() {
     if (paused) {
         paused = false;
+        document.getElementById("overlay").style.display = "none";
         console.log("Game resumed.");
     }
     else {
         paused = true;
+        document.getElementById("overlay").style.display = "inherit";
         console.log("Game paused.");
     }
 }

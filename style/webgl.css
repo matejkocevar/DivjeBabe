@@ -11,6 +11,19 @@ canvas {
     cursor: none;
 }
 
+#overlay {
+    display: none;
+    z-index: 2;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: bisque;
+    text-align: center;
+}
+
 #loadingtext {
     position: absolute;
     top: 250px;

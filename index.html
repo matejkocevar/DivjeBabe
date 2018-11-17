@@ -41,18 +41,13 @@
 		        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
 		        vTextureCoord = aTextureCoord;
 		    }
-
-
-
-
-
-
-
-
     </script>
 </head>
 <body onload="start()">
 <div id="content">
+    <div id="overlay">
+        <h1>Game paused</h1>
+    </div>
     <canvas id="glcanvas">
         No <code>&lt;canvas&gt;</code> suppport in your browser.
     </canvas>
