@@ -39,6 +39,8 @@ let walkingSpeed = 0.003;
 let moveForward = 0;
 let moveLeft = 0;
 
+let joggingAdjust = 0;
+
 // Used to make us "jog" up and down as we move forward.
 let joggingAngle = 0;
 
@@ -354,10 +356,10 @@ function animate() {
         const elapsed = timeNow - lastTime;
 
         if (moveForward !== 0 || moveLeft != 0) {
-            xPosition -= Math.sin(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed;
-            zPosition -= Math.cos(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed;
+            xPosition -= Math.sin(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveForward * walkingSpeed * elapsed * joggingAdjust;
+            zPosition -= Math.cos(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveForward * walkingSpeed * elapsed * joggingAdjust;
 
-            joggingAngle += elapsed * 0.4; // 0.4 "fiddle factor" - makes it feel more realistic :-)
+            joggingAngle += elapsed * 0.5; // 0.5 "fiddle factor" - makes it feel more realistic :-)
 
             var phase = 1;
             var temp = Math.sin(degToRad(joggingAngle));
@@ -366,6 +368,8 @@ function animate() {
                 playSoundFootstep();
             }
             yPosition = phase * temp / 14 + 0.4;
+
+            joggingAdjust = temp / 8;
         }
 
         yaw += yawRate * elapsed;
