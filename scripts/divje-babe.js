@@ -21,6 +21,12 @@ let texturesLoaded = false;
 // Keyboard handling helper variable for reading the status of keys
 const currentlyPressedKeys = {};
 
+// Mouse helper variables
+var mouseDown = false;
+var lastMouseX = null;
+var lastMouseY = null;
+const mouseSensitivity = 0.5;
+
 // Variables for storing current position and speed
 let pitch = 0;
 let pitchRate = 0;
@@ -226,7 +232,7 @@ function handleTextureLoaded(texture) {
 //
 // handleLoadedWorld
 //
-// Initialisation of world 
+// Initialisation of world
 //
 function handleLoadedWorld(data) {
     const lines = data.split("\n");
@@ -268,7 +274,7 @@ function handleLoadedWorld(data) {
 //
 // loadWorld
 //
-// Loading world 
+// Loading world
 //
 function loadWorld() {
     const request = new XMLHttpRequest();
@@ -411,6 +417,43 @@ function handleKeys() {
     }
 }
 
+function handleMouseDown(event) {
+    mouseDown = true;
+    lastMouseX = event.clientX;
+    lastMouseY = event.clientY;
+}
+
+function handleMouseUp(event) {
+    mouseDown = false;
+}
+
+//
+// handleMouse
+//
+// Called every time before redeawing the screen for keyboard
+// input handling. Function continuisly updates helper variables.
+//
+function handleMouseMove(event) {
+    var newX = event.clientX;
+    var newY = event.clientY;
+
+    var deltaX = newX - lastMouseX;
+    var deltaY = newY - lastMouseY;
+
+    pitch -= deltaY * mouseSensitivity;
+    yaw -= deltaX * mouseSensitivity;
+
+
+    //limit the pitch to the front 180 degrees
+    if (pitch > 90)
+        pitch = 90;
+    if (pitch < -90)
+        pitch = -90;
+
+    lastMouseX = newX;
+    lastMouseY = newY;
+}
+
 //
 // start
 //
@@ -443,6 +486,10 @@ function start() {
         document.onkeydown = handleKeyDown;
         document.onkeyup = handleKeyUp;
 
+        canvas.onmousedown = handleMouseDown;
+        document.onmouseup = handleMouseUp;
+        document.onmousemove = handleMouseMove;
+
         // Set up to draw the scene periodically.
         setInterval(function () {
             if (texturesLoaded) { // only draw scene and animate when textures are loaded.
@@ -455,6 +502,7 @@ function start() {
 }
 
 window.onresize = setCanvasSize;
+
 function setCanvasSize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
