@@ -45,6 +45,9 @@ let joggingAngle = 0;
 // Helper variable for animation
 let lastTime = 0;
 
+// Pause menu state variable
+let paused = false;
+
 //
 // Matrix utility functions
 //
@@ -379,6 +382,10 @@ function handleKeyDown(event) {
 function handleKeyUp(event) {
     // reseting the pressed state for individual key
     currentlyPressedKeys[event.keyCode] = false;
+
+    // events on single keypress
+    if (event.keyCode === 27)
+        pausedToogle();
 }
 
 //
@@ -495,9 +502,11 @@ function start() {
         // Set up to draw the scene periodically.
         setInterval(function () {
             if (texturesLoaded) { // only draw scene and animate when textures are loaded.
-                requestAnimationFrame(animate);
                 handleKeys();
-                drawScene();
+                if (!paused) {
+                    requestAnimationFrame(animate);
+                    drawScene();
+                }
             }
         }, 15);
     }
@@ -509,4 +518,15 @@ function setCanvasSize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     initGL();
+}
+
+function pausedToogle() {
+    if (paused) {
+        paused = false;
+        console.log("Game resumed.");
+    }
+    else {
+        paused = true;
+        console.log("Game paused.");
+    }
 }
