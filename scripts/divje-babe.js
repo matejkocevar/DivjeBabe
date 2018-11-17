@@ -357,8 +357,15 @@ function animate() {
             xPosition -= Math.sin(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed;
             zPosition -= Math.cos(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed;
 
-            joggingAngle += elapsed * 0.6; // 0.6 "fiddle factor" - makes it feel more realistic :-)
-            yPosition = Math.sin(degToRad(joggingAngle)) / 20 + 0.4
+            joggingAngle += elapsed * 0.4; // 0.4 "fiddle factor" - makes it feel more realistic :-)
+
+            var phase = 1;
+            var temp = Math.sin(degToRad(joggingAngle));
+            if (temp < 0) {
+                phase = phase * (-1);
+                playSoundFootstep();
+            }
+            yPosition = phase * temp / 14 + 0.4;
         }
 
         yaw += yawRate * elapsed;
@@ -531,4 +538,8 @@ function pausedToogle() {
         document.getElementById("overlay").style.display = "inherit";
         console.log("Game paused.");
     }
+}
+
+function playSoundFootstep() {
+
 }
