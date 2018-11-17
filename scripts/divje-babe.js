@@ -70,7 +70,7 @@ function degToRad(degrees) {
 // Initialize WebGL, returning the GL context or null if
 // WebGL isn't available or could not be initialized.
 //
-function initGL(canvas) {
+function initGL() {
     let gl = null;
     try {
         // Try to grab the standard context. If it fails, fallback to experimental.
@@ -419,8 +419,8 @@ function handleKeys() {
 //
 function start() {
     canvas = document.getElementById("glcanvas");
-
-    gl = initGL(canvas);      // Initialize the GL context
+    setCanvasSize();
+    gl = initGL();      // Initialize the GL context
 
     // Only continue if WebGL is available and working
     if (gl) {
@@ -452,4 +452,11 @@ function start() {
             }
         }, 15);
     }
+}
+
+window.onresize = setCanvasSize;
+function setCanvasSize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initGL();
 }

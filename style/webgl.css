@@ -2,32 +2,12 @@ body {
     font-family: "Arial", sans-serif;
     background-color: black;
     color: whitesmoke;
-}
-
-#content {
-    width: 100%;
-    text-align: center;
+    margin: 0;
 }
 
 canvas {
-    display: inline;
-    border: 1px solid black;
-}
-
-h1 {
-    text-align: left;
-}
-
-h2 {
-    text-align: left;
-}
-
-ul {
-    text-align: left;
-}
-
-td {
-    width: 200px;
+    width: 100vw;
+    height: 100vh;
 }
 
 #loadingtext {
