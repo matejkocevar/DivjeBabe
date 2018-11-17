@@ -49,6 +49,7 @@ let lastTime = 0;
 
 // Pause menu state variable
 let paused = false;
+let distanceTravelled = 0;
 
 //
 // Matrix utility functions
@@ -355,7 +356,7 @@ function animate() {
     if (lastTime !== 0) {
         const elapsed = timeNow - lastTime;
 
-        if (moveForward !== 0 || moveLeft != 0) {
+        if (moveForward !== 0 || moveLeft !== 0) {
             xPosition -= Math.sin(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveForward * walkingSpeed * elapsed * joggingAdjust;
             zPosition -= Math.cos(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveForward * walkingSpeed * elapsed * joggingAdjust;
 
@@ -370,6 +371,10 @@ function animate() {
             yPosition = phase * temp / 14 + 0.4;
 
             joggingAdjust = temp / 8;
+
+            // count top of step
+            if (yPosition > 0.471285)
+                distanceTravelled++;
         }
 
         yaw += yawRate * elapsed;
@@ -541,6 +546,10 @@ function pausedToogle() {
         paused = true;
         document.getElementById("overlay").style.display = "inherit";
         console.log("Game paused.");
+        document.getElementById("distanceTravelled").innerText = distanceTravelled + " steps";
+        document.getElementById("hitsWall").innerText = " To be announced";
+        document.getElementById("eventsSurvived").innerText = " To be announced";
+
     }
 }
 

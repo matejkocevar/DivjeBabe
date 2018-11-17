@@ -11,6 +11,23 @@ canvas {
     cursor: none;
 }
 
+table {
+    width: 100%;
+}
+
+td {
+    width: 50%;
+}
+
+td:first-child {
+    text-align: right;
+    font-weight: bold;
+}
+
+td:last-child {
+    text-align: left;
+}
+
 #overlay {
     display: none;
     z-index: 2;
@@ -22,6 +39,7 @@ canvas {
     background-color: rgba(0, 0, 0, 0.7);
     color: bisque;
     text-align: center;
+    padding-top: 30vh;
 }
 
 #loadingtext {
