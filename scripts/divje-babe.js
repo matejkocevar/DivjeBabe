@@ -298,7 +298,7 @@ function handleLoadedWorld(data) {
 //
 function loadWorld() {
     const request = new XMLHttpRequest();
-    request.open("GET", "./assets/worlds.txt");
+    request.open("GET", "./assets/world_cave.txt");
     request.onreadystatechange = function () {
         if (request.readyState === 4) {
             handleLoadedWorld(request.responseText);
