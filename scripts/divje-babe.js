@@ -591,7 +591,6 @@ function playSoundFootstep() {
 }
 
 function handleGravity(elapsedTime) {
-    console.log("verticalVelocity = " + verticalVelocity);
 
     verticalVelocity -= elapsedTime * 0.001;
     protagonistYPosition += elapsedTime * 0.012 * verticalVelocity;   // fiddle factor
