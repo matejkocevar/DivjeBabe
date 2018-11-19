@@ -236,6 +236,7 @@ function handleTextureLoaded(texture) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
+    // suggested either MIRRORED_REPEAT or REPEAT
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
@@ -269,8 +270,6 @@ function handleLoadedWorld(data) {
             // And then the texture coords
             vertexTextureCoords.push(parseFloat(vals[3]));
             vertexTextureCoords.push(parseFloat(vals[4]));
-
-            //console.log(vals[0] + " " + vals[1] + " " + vals[2] + " " + vals[3] + " " + vals[4]);
 
             vertexCount += 1;
         }
