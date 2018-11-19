@@ -39,7 +39,9 @@ let walkingSpeed = 0.003;
 let moveForward = 0;
 let moveLeft = 0;
 
+// Used to makes us "jo" left and right as we change foot
 let joggingAdjust = 0;
+var joggingPhase = 1;
 
 // Used to make us "jog" up and down as we move forward.
 let joggingAngle = 0;
@@ -349,10 +351,11 @@ function drawScene() {
 //
 // animate
 //
-// Called every time before redeawing the screen.
+// Called every time before redrawing the screen.
 //
 function animate() {
     const timeNow = new Date().getTime();
+
     if (lastTime !== 0) {
         const elapsed = timeNow - lastTime;
 
@@ -362,19 +365,17 @@ function animate() {
 
             joggingAngle += elapsed * 0.5; // 0.5 "fiddle factor" - makes it feel more realistic :-)
 
-            var phase = 1;
             var temp = Math.sin(degToRad(joggingAngle));
-            if (temp < 0) {
-                phase = phase * (-1);
+            if (joggingPhase * temp < 0) {
+                // the sin would get negative at this point, we detect it to make new step
+                joggingPhase = joggingPhase * (-1);
+
+                distanceTravelled++;
                 playSoundFootstep();
             }
-            yPosition = phase * temp / 14 + 0.4;
+            yPosition = joggingPhase * temp / 14 + 0.4;
 
             joggingAdjust = temp / 8;
-
-            // count top of step
-            if (yPosition > 0.471285)
-                distanceTravelled++;
         }
 
         yaw += yawRate * elapsed;
