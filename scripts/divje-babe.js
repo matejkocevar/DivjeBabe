@@ -224,7 +224,7 @@ function initTextures() {
     wallTexture.image.onload = function () {
         handleTextureLoaded(wallTexture)
     };
-    wallTexture.image.src = "./assets/wall.png";
+    wallTexture.image.src = "./assets/test.jpg";
 }
 
 function handleTextureLoaded(texture) {
@@ -235,6 +235,10 @@ function handleTextureLoaded(texture) {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
     gl.generateMipmap(gl.TEXTURE_2D);
 
     gl.bindTexture(gl.TEXTURE_2D, null);
@@ -265,6 +269,8 @@ function handleLoadedWorld(data) {
             // And then the texture coords
             vertexTextureCoords.push(parseFloat(vals[3]));
             vertexTextureCoords.push(parseFloat(vals[4]));
+
+            console.log(vals[0] + " " + vals[1] + " " + vals[2] + " " + vals[3] + " " + vals[4]);
 
             vertexCount += 1;
         }
