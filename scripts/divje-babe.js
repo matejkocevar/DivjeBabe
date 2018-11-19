@@ -25,9 +25,9 @@ const currentlyPressedKeys = {};
 var mouseDown = false;
 var lastMouseX = null;
 var lastMouseY = null;
-const mouseSensitivity = 0.5;
+const mouseSensitivity = 0.3;
 
-// Variables for storing current position and walkingSpeed
+// Variables for storing current position and currentSpeed
 let pitch = 0;
 let pitchRate = 0;
 let yaw = 0;
@@ -35,9 +35,13 @@ let yawRate = 0;
 let xPosition = 0;
 let yPosition = 0.4;
 let zPosition = 0;
-let walkingSpeed = 0.003;
 let moveForward = 0;
 let moveLeft = 0;
+
+// Speed
+let walkingSpeed = 0.0025;
+let sprintingSpeed = 0.0035;
+let currentSpeed = walkingSpeed;
 
 // Used to makes us "jo" left and right as we change foot
 let joggingAdjust = 0;
@@ -360,10 +364,10 @@ function animate() {
         const elapsed = timeNow - lastTime;
 
         if (moveForward !== 0 || moveLeft !== 0) {
-            xPosition -= Math.sin(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveForward * walkingSpeed * elapsed * joggingAdjust;
-            zPosition -= Math.cos(degToRad(yaw)) * moveForward * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveForward * walkingSpeed * elapsed * joggingAdjust;
+            xPosition -= Math.sin(degToRad(yaw)) * moveForward * currentSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * 0.7 * elapsed - Math.sin(degToRad(yaw - 90)) * moveForward * currentSpeed * elapsed * joggingAdjust;
+            zPosition -= Math.cos(degToRad(yaw)) * moveForward * currentSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * 0.7 * elapsed - Math.cos(degToRad(yaw - 90)) * moveForward * currentSpeed * elapsed * joggingAdjust;
 
-            joggingAngle += elapsed * 0.5; // 0.5 "fiddle factor" - makes it feel more realistic :-)
+            joggingAngle += elapsed * 0.5 * currentSpeed / walkingSpeed; // 0.5 "fiddle factor" - makes it feel more realistic :-)
 
             var temp = Math.sin(degToRad(joggingAngle));
             if (joggingPhase * temp < 0) {
@@ -412,14 +416,11 @@ function handleKeyUp(event) {
 // input handling. Function continuisly updates helper variables.
 //
 function handleKeys() {
-    if (currentlyPressedKeys[33]) {
-        // Page Up
-        pitchRate = 0.1;
-    } else if (currentlyPressedKeys[34]) {
-        // Page Down
-        pitchRate = -0.1;
+    if (currentlyPressedKeys[16]) {
+        // Shift
+        currentSpeed = sprintingSpeed;
     } else {
-        pitchRate = 0;
+        currentSpeed = walkingSpeed;
     }
 
     if (currentlyPressedKeys[37] || currentlyPressedKeys[65]) {
