@@ -45,7 +45,19 @@ let currentSpeed = walkingSpeed;
 
 // Used to makes us "jo" left and right as we change foot
 let joggingAdjust = 0;
-var joggingPhase = 1;
+let joggingPhase = 1;
+
+//Used for acceleration and gravity;
+let verticalVelocity = 0;
+const floorLevel = 0.0;
+
+// how high is our protagonist aka. on what default yPosition is our first person camera?
+const protagonistHeight = 0.4;
+yPosition = protagonistHeight;
+
+// on what Y position are protagonist's feet
+let protagonistYPosition = 0.0;
+yPosition = protagonistYPosition + protagonistHeight;
 
 // Used to make us "jog" up and down as we move forward.
 let joggingAngle = 0;
@@ -364,17 +376,22 @@ function drawScene() {
 //
 function animate() {
     const timeNow = new Date().getTime();
+    let elapsed = 0;
 
     if (lastTime !== 0) {
-        const elapsed = timeNow - lastTime;
+
+        elapsed = timeNow - lastTime;
+
+        var temp = Math.sin(degToRad(joggingAngle));
 
         if (moveForward !== 0 || moveLeft !== 0) {
+
             xPosition -= Math.sin(degToRad(yaw)) * moveForward * currentSpeed * elapsed - Math.sin(degToRad(yaw - 90)) * moveLeft * walkingSpeed * 0.7 * elapsed - Math.sin(degToRad(yaw - 90)) * moveForward * currentSpeed * elapsed * joggingAdjust;
             zPosition -= Math.cos(degToRad(yaw)) * moveForward * currentSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * 0.7 * elapsed - Math.cos(degToRad(yaw - 90)) * moveForward * currentSpeed * elapsed * joggingAdjust;
 
             joggingAngle += elapsed * 0.5 * currentSpeed / walkingSpeed; // 0.5 "fiddle factor" - makes it feel more realistic :-)
 
-            var temp = Math.sin(degToRad(joggingAngle));
+            //temp = Math.sin(degToRad(joggingAngle));
             if (joggingPhase * temp < 0) {
                 // the sin would get negative at this point, we detect it to make new step
                 joggingPhase = joggingPhase * (-1);
@@ -382,15 +399,19 @@ function animate() {
                 distanceTravelled++;
                 playSoundFootstep();
             }
-            yPosition = joggingPhase * temp / 14 + 0.4;
 
             joggingAdjust = temp / 8;
         }
+
+        yPosition = joggingPhase * temp / 14 + protagonistHeight + protagonistYPosition;
 
         yaw += yawRate * elapsed;
         pitch += pitchRate * elapsed;
 
     }
+    handleGravity(elapsed);
+    handleCollisionDetectionFloor();
+
     lastTime = timeNow;
 }
 
@@ -426,6 +447,11 @@ function handleKeys() {
         currentSpeed = sprintingSpeed;
     } else {
         currentSpeed = walkingSpeed;
+    }
+    if (currentlyPressedKeys[32] && verticalVelocity == 0.0) {
+        // space
+        verticalVelocity = 0.4;
+    } else {
     }
 
     if (currentlyPressedKeys[37] || currentlyPressedKeys[65]) {
@@ -562,4 +588,21 @@ function pausedToogle() {
 
 function playSoundFootstep() {
 
+}
+
+function handleGravity(elapsedTime) {
+    console.log("verticalVelocity = " + verticalVelocity);
+
+    verticalVelocity -= elapsedTime * 0.001;
+    protagonistYPosition += elapsedTime * 0.012 * verticalVelocity;   // fiddle factor
+}
+
+/*
+This function needs to be switched with a proper hit detection method
+ */
+function handleCollisionDetectionFloor() {
+    if (protagonistYPosition < floorLevel) {
+        verticalVelocity = 0.0;
+        protagonistYPosition = floorLevel;
+    }
 }
