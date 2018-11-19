@@ -270,7 +270,7 @@ function handleLoadedWorld(data) {
             vertexTextureCoords.push(parseFloat(vals[3]));
             vertexTextureCoords.push(parseFloat(vals[4]));
 
-            console.log(vals[0] + " " + vals[1] + " " + vals[2] + " " + vals[3] + " " + vals[4]);
+            //console.log(vals[0] + " " + vals[1] + " " + vals[2] + " " + vals[3] + " " + vals[4]);
 
             vertexCount += 1;
         }
@@ -298,7 +298,7 @@ function handleLoadedWorld(data) {
 //
 function loadWorld() {
     const request = new XMLHttpRequest();
-    request.open("GET", "./assets/world.txt");
+    request.open("GET", "./assets/worlds.txt");
     request.onreadystatechange = function () {
         if (request.readyState === 4) {
             handleLoadedWorld(request.responseText);
