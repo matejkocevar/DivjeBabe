@@ -236,7 +236,7 @@ function initTextures() {
     wallTexture.image.onload = function () {
         handleTextureLoaded(wallTexture)
     };
-    wallTexture.image.src = "./assets/rock.jpg";
+    wallTexture.image.src = "./assets/wall_cave.jpg";
 }
 
 function handleTextureLoaded(texture) {
