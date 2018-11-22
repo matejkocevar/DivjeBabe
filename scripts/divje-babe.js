@@ -5,10 +5,11 @@ let shaderProgram;
 
 // Buffers
 let worldVertexPositionBuffer = null;
+let worldVertexNormalBuffer = null;
 let worldVertexTextureCoordBuffer = null;
 
 // Model-view and projection matrix and model-view matrix stack
-const mvMatrixStack = [];
+let mvMatrixStack = [];
 let mvMatrix = mat4.create();
 const pMatrix = mat4.create();
 
@@ -205,12 +206,28 @@ function initShaders() {
     // store location of aTextureCoord variable defined in shader
     gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
 
+    // store location of vertex normals variable defined in shader
+    shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+
+    // turn on vertex normals attribute at specified position
+    gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+
     // store location of uPMatrix variable defined in shader - projection matrix
     shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
     // store location of uMVMatrix variable defined in shader - model-view matrix
     shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+    // store location of uNMatrix variable defined in shader - normal matrix
+    shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
     // store location of uSampler variable defined in shader
     shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+    // store location of uUseLighting variable defined in shader
+    shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram, "uUseLighting");
+    // store location of uAmbientColor variable defined in shader
+    shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
+    // store location of uLightingDirection variable defined in shader
+    shaderProgram.pointLightingLocationUniform = gl.getUniformLocation(shaderProgram, "uPointLightingLocation");
+    // store location of uDirectionalColor variable defined in shader
+    shaderProgram.pointLightingColorUniform = gl.getUniformLocation(shaderProgram, "uPointLightingColor");
 }
 
 //
@@ -221,6 +238,11 @@ function initShaders() {
 function setMatrixUniforms() {
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+
+    var normalMatrix = mat3.create();
+    mat4.toInverseMat3(mvMatrix, normalMatrix);
+    mat3.transpose(normalMatrix);
+    gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 }
 
 //
@@ -236,7 +258,7 @@ function initTextures() {
     wallTexture.image.onload = function () {
         handleTextureLoaded(wallTexture)
     };
-    wallTexture.image.src = "./assets/wall_cave.jpg";
+    wallTexture.image.src = "./assets/white.jpg";
 }
 
 function handleTextureLoaded(texture) {
@@ -270,10 +292,12 @@ function handleLoadedWorld(data) {
     let vertexCount = 0;
     const vertexPositions = [];
     const vertexTextureCoords = [];
+    const vertexNormals = [];
+
     for (const i in lines) {
         // noinspection JSUnfilteredForInLoop
         const vals = lines[i].replace(/^\s+/, "").split(/\s+/);
-        if (vals.length === 5 && vals[0] !== "//") {
+        if (vals.length === 8 && vals[0] !== "//") {
             // It is a line describing a vertex; get X, Y and Z first
             vertexPositions.push(parseFloat(vals[0]));
             vertexPositions.push(parseFloat(vals[1]));
@@ -283,9 +307,17 @@ function handleLoadedWorld(data) {
             vertexTextureCoords.push(parseFloat(vals[3]));
             vertexTextureCoords.push(parseFloat(vals[4]));
 
+            // And the normals
+            vertexNormals.push(parseFloat(vals[5]));
+            vertexNormals.push(parseFloat(vals[6]));
+            vertexNormals.push(parseFloat(vals[7]));
+
             vertexCount += 1;
+
+            //console.log(lines[i]);
         }
     }
+    console.log(vertexCount);
 
     worldVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
@@ -298,6 +330,12 @@ function handleLoadedWorld(data) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexTextureCoords), gl.STATIC_DRAW);
     worldVertexTextureCoordBuffer.itemSize = 2;
     worldVertexTextureCoordBuffer.numItems = vertexCount;
+
+    worldVertexNormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexNormalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals), gl.STATIC_DRAW);
+    worldVertexNormalBuffer.itemSize = 3;
+    worldVertexNormalBuffer.numItems = vertexCount;
 
     document.getElementById("loadingtext").textContent = "";
 }
@@ -340,6 +378,12 @@ function drawScene() {
     // and 100 units away from the camera.
     mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 
+    //lighting
+    gl.uniform1i(shaderProgram.useLightingUniform, true);
+    gl.uniform3f(shaderProgram.ambientColorUniform, 0.0, 0.0, 0.0);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, 0.0, 1.0, 0.0);
+    gl.uniform3f(shaderProgram.pointLightingColorUniform, 0.5, 0.5, 0.5);
+
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
     mat4.identity(mvMatrix);
@@ -363,6 +407,10 @@ function drawScene() {
     // array, setting attributes, and pushing it to GL.
     gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, worldVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    // Set the normals attribute for the vertices.
+    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexNormalBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, worldVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     // Draw the cube.
     setMatrixUniforms();
