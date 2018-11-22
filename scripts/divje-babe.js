@@ -177,8 +177,8 @@ function getShader(gl, id) {
 // Initialize the shaders, so WebGL knows how to light our scene.
 //
 function initShaders() {
-    const fragmentShader = getShader(gl, "per-vertex-lighting-fs");
-    const vertexShader = getShader(gl, "per-vertex-lighting-vs");
+    const fragmentShader = getShader(gl, "per-fragment-lighting-fs");
+    const vertexShader = getShader(gl, "per-fragment-lighting-vs");
 
     // Create the shader program
     shaderProgram = gl.createProgram();
@@ -259,7 +259,7 @@ function initTextures() {
     wallTexture.image.onload = function () {
         handleTextureLoaded(wallTexture)
     };
-    wallTexture.image.src = "./assets/white.jpg";
+    wallTexture.image.src = "./assets/wall_cave.jpg";
 }
 
 function handleTextureLoaded(texture) {
@@ -314,8 +314,6 @@ function handleLoadedWorld(data) {
             vertexNormals.push(parseFloat(vals[7]));
 
             vertexCount += 1;
-
-            //console.log(lines[i]);
         }
     }
     console.log(vertexCount);
@@ -381,12 +379,10 @@ function drawScene() {
 
     //lighting
     gl.uniform1i(shaderProgram.useLightingUniform, true);
-    gl.uniform3f(shaderProgram.ambientColorUniform, 0.0, 0.0, 0.0);
-    gl.uniform3f(shaderProgram.pointLightingLocationUniform, 0.0, 1.0, 0.0);
-    gl.uniform3f(shaderProgram.pointLightingColorUniform, 0.5, 0.5, 0.5);
-    gl.uniform1i(shaderProgram.useTexturesUniform, false);
-
-    //console.log("xPosition = " + xPosition + ",  yPosition = " + yPosition + ",  zPosition = " + zPosition);
+    gl.uniform3f(shaderProgram.ambientColorUniform, 0.1, 0.07, 0.03);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition, yPosition + 0.5, zPosition);
+    gl.uniform3f(shaderProgram.pointLightingColorUniform, 1.0, 0.7, 0.3);
+    gl.uniform1i(shaderProgram.useTexturesUniform, true);
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
