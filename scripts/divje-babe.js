@@ -177,8 +177,8 @@ function getShader(gl, id) {
 // Initialize the shaders, so WebGL knows how to light our scene.
 //
 function initShaders() {
-    const fragmentShader = getShader(gl, "shader-fs");
-    const vertexShader = getShader(gl, "shader-vs");
+    const fragmentShader = getShader(gl, "per-vertex-lighting-fs");
+    const vertexShader = getShader(gl, "per-vertex-lighting-vs");
 
     // Create the shader program
     shaderProgram = gl.createProgram();
@@ -220,6 +220,7 @@ function initShaders() {
     shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
     // store location of uSampler variable defined in shader
     shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+    shaderProgram.useTexturesUniform = gl.getUniformLocation(shaderProgram, "uUseTextures");
     // store location of uUseLighting variable defined in shader
     shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram, "uUseLighting");
     // store location of uAmbientColor variable defined in shader
@@ -383,6 +384,9 @@ function drawScene() {
     gl.uniform3f(shaderProgram.ambientColorUniform, 0.0, 0.0, 0.0);
     gl.uniform3f(shaderProgram.pointLightingLocationUniform, 0.0, 1.0, 0.0);
     gl.uniform3f(shaderProgram.pointLightingColorUniform, 0.5, 0.5, 0.5);
+    gl.uniform1i(shaderProgram.useTexturesUniform, false);
+
+    //console.log("xPosition = " + xPosition + ",  yPosition = " + yPosition + ",  zPosition = " + zPosition);
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
