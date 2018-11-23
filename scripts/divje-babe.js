@@ -272,8 +272,8 @@ function handleTextureLoaded(texture) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
     // suggested either MIRRORED_REPEAT or REPEAT
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
 
     gl.generateMipmap(gl.TEXTURE_2D);
 
@@ -380,7 +380,7 @@ function drawScene() {
     //lighting
     gl.uniform1i(shaderProgram.useLightingUniform, true);
     gl.uniform3f(shaderProgram.ambientColorUniform, 0.1, 0.07, 0.03);
-    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition, yPosition + 0.5, zPosition);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition, yPosition, zPosition);
     gl.uniform3f(shaderProgram.pointLightingColorUniform, 1.0, 0.7, 0.3);
     gl.uniform1i(shaderProgram.useTexturesUniform, true);
 

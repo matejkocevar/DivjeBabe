@@ -42,7 +42,7 @@
                 // calculate the distance to the light
                 float distance = sqrt(lightVector.x*lightVector.x + lightVector.y*lightVector.y + lightVector.z*lightVector.z);
                 float distanceWeight = min(1.0, 1.0/distance);
-                directionalLightWeighting = directionalLightWeighting * distanceWeight;
+                directionalLightWeighting = directionalLightWeighting * sqrt(distanceWeight * distanceWeight * distanceWeight);
 
                 // calculate lighting
                 lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;
