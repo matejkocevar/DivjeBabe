@@ -60,20 +60,20 @@ td:last-child {
 }
 
 .indicators #health {
-    background-color: rgba(51, 203, 33, 0.31);
+    background-color: rgba(51, 203, 33, 0.6);
     width: 100%;
-    height: 5px;
+    height: 10px;
     position: relative;
     transition: width .5s linear;
 }
 
 .indicators #sprint {
-    background-color: rgba(51, 203, 33, 0.3);
+    background-color: rgba(51, 203, 33, 0.4);
     position: absolute;
     top: 0;
     left: 0;
     bottom: 0;
-    height: 10px;
+    height: 20px;
     transition: width .5s linear;
 }
 

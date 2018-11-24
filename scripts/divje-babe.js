@@ -725,8 +725,8 @@ function updateHealth(change) {
 
     if (change < 0) {
         console.info("Ouch " + (-change) + " times! Health is now " + newHealth);
-        healthbar.style.background = "rgba(203, 23, 35, 0.31)";
-        sprintbar.style.background = "rgba(203, 23, 35, 0.3)";
+        healthbar.style.background = "rgba(203, 23, 35, 0.6)";
+        sprintbar.style.background = "rgba(203, 23, 35, 0.4)";
         healthbar.style.width = newHealth + '%';
 
         setTimeout(function () {
@@ -737,8 +737,8 @@ function updateHealth(change) {
 
     } else {
         console.info("Healthier " + change + " times! Health is now " + newHealth);
-        healthbar.style.background = "rgba(35, 117, 203, 0.31)";
-        sprintbar.style.background = "rgba(35, 117, 203, 0.3)";
+        healthbar.style.background = "rgba(35, 117, 203, 0.6)";
+        sprintbar.style.background = "rgba(35, 117, 203, 0.4)";
         healthbar.style.width = newHealth + '%';
 
         setTimeout(function () {
