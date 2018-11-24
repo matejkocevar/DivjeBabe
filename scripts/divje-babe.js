@@ -1,3 +1,17 @@
+let objectsLoaded = false;
+
+// Gamification variables
+let maxBodyStatus = 100;
+let health = 0;
+let sprint = 0;
+let sprintChargingEnabled = true;
+let healthbar;
+let sprintbar;
+let healthbarBcg;
+let distanceTravelled;
+let distanceSprinted;
+let protagonist;
+
 // Global variable definitionvar canvas;
 let canvas;
 let gl;
@@ -23,19 +37,19 @@ let texturesLoaded = false;
 const currentlyPressedKeys = {};
 
 // Mouse helper variables
-var mouseDown = false;
-var lastMouseX = null;
-var lastMouseY = null;
+let mouseDown = false;
+let lastMouseX = null;
+let lastMouseY = null;
 const mouseSensitivity = 0.3;
 
 // Variables for storing current position and currentSpeed
-let pitch = 0;
+let pitch;
 let pitchRate = 0;
 let yaw = 0;
 let yawRate = 0;
-let xPosition = 0;
-let yPosition = 0.4;
-let zPosition = 0;
+let xPosition;
+let yPosition;
+let zPosition;
 let moveForward = 0;
 let moveLeft = 0;
 
@@ -46,15 +60,14 @@ let currentSpeed = walkingSpeed;
 
 // Used to makes us "jo" left and right as we change foot
 let joggingAdjust = 0;
-let joggingPhase = 1;
+let joggingPhase;
 
 //Used for acceleration and gravity;
 let verticalVelocity = 0;
 const floorLevel = 0.0;
 
 // how high is our protagonist aka. on what default yPosition is our first person camera?
-const protagonistHeight = 0.4;
-yPosition = protagonistHeight;
+let protagonistHeight = 0.4;
 
 // on what Y position are protagonist's feet
 let protagonistYPosition = 0.0;
@@ -68,7 +81,6 @@ let lastTime = 0;
 
 // Pause menu state variable
 let paused = false;
-let distanceTravelled = 0;
 
 //
 // Matrix utility functions
@@ -118,6 +130,24 @@ function initGL() {
         alert("Unable to initialize WebGL. Your browser may not support it.");
     }
     return gl;
+}
+
+function initGame() {
+    protagonist = true;
+    protagonistHeight = 0.4;
+    xPosition = 0;
+    yPosition = protagonistHeight;
+    zPosition = 0;
+    moveForward = 0;
+    pitch = 0;
+    pitchRate = 0;
+    joggingPhase = 1;
+    distanceTravelled = 0;
+    distanceSprinted = 0;
+    paused = false;
+
+    updateHealth(maxBodyStatus);
+    showStats(false);
 }
 
 //
@@ -240,7 +270,7 @@ function setMatrixUniforms() {
     gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 
-    var normalMatrix = mat3.create();
+    const normalMatrix = mat3.create();
     mat4.toInverseMat3(mvMatrix, normalMatrix);
     mat3.transpose(normalMatrix);
     gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
@@ -316,7 +346,6 @@ function handleLoadedWorld(data) {
             vertexCount += 1;
         }
     }
-    console.log(vertexCount);
 
     worldVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
@@ -430,7 +459,7 @@ function animate() {
 
         elapsed = timeNow - lastTime;
 
-        var temp = Math.sin(degToRad(joggingAngle));
+        const temp = Math.sin(degToRad(joggingAngle));
 
         if (moveForward !== 0 || moveLeft !== 0) {
 
@@ -446,6 +475,11 @@ function animate() {
 
                 distanceTravelled++;
                 playSoundFootstep();
+
+                if ((currentSpeed === sprintingSpeed) && sprint) {
+                    distanceSprinted++;
+                    updateSprint(-8);
+                }
             }
 
             joggingAdjust = temp / 8;
@@ -453,8 +487,22 @@ function animate() {
 
         yPosition = joggingPhase * temp / 14 + protagonistHeight + protagonistYPosition;
 
+        if (currentSpeed !== sprintingSpeed)
+            updateSprint((sprintingSpeed - currentSpeed * (moveForward !== 0 || moveLeft !== 0)) * 30);
+
+
         yaw += yawRate * elapsed;
         pitch += pitchRate * elapsed;
+
+        //limit the pitch to the front 180 degrees
+        if (pitch > 90) {
+            pitch = 90;
+            pitchRate = 0;
+        }
+        if (pitch < -90) {
+            pitch = -90;
+            pitchRate = 0;
+        }
 
     }
     handleGravity(elapsed);
@@ -479,8 +527,18 @@ function handleKeyUp(event) {
     currentlyPressedKeys[event.keyCode] = false;
 
     // events on single keypress
-    if (event.keyCode === 27)
+    if (event.keyCode === 27 && health) // Esc
         pausedToogle();
+
+    if (event.keyCode === 82) // R
+        initGame();
+
+    // TODO odstrani, ko bo implementirano spreminjanje healtha
+    if (event.keyCode === 187) // +
+        updateHealth(10);
+    if (event.keyCode === 189) // -
+        if (!updateHealth(-10))
+            handleDeath();
 }
 
 //
@@ -492,11 +550,13 @@ function handleKeyUp(event) {
 function handleKeys() {
     if (currentlyPressedKeys[16]) {
         // Shift
-        currentSpeed = sprintingSpeed;
+        sprintChargingEnabled = false;
+        currentSpeed = sprint ? sprintingSpeed : walkingSpeed;
     } else {
+        sprintChargingEnabled = true;
         currentSpeed = walkingSpeed;
     }
-    if (currentlyPressedKeys[32] && verticalVelocity == 0.0) {
+    if (currentlyPressedKeys[32] && verticalVelocity === 0.0) {
         // space
         verticalVelocity = 0.4;
     } else {
@@ -529,7 +589,7 @@ function handleMouseDown(event) {
     lastMouseY = event.clientY;
 }
 
-function handleMouseUp(event) {
+function handleMouseUp() {
     mouseDown = false;
 }
 
@@ -540,21 +600,14 @@ function handleMouseUp(event) {
 // input handling. Function continuisly updates helper variables.
 //
 function handleMouseMove(event) {
-    var newX = event.clientX;
-    var newY = event.clientY;
+    const newX = event.clientX;
+    const newY = event.clientY;
 
-    var deltaX = newX - lastMouseX;
-    var deltaY = newY - lastMouseY;
+    const deltaX = newX - lastMouseX;
+    const deltaY = newY - lastMouseY;
 
     pitch -= deltaY * mouseSensitivity;
     yaw -= deltaX * mouseSensitivity;
-
-
-    //limit the pitch to the front 180 degrees
-    if (pitch > 90)
-        pitch = 90;
-    if (pitch < -90)
-        pitch = -90;
 
     lastMouseX = newX;
     lastMouseY = newY;
@@ -567,7 +620,12 @@ function handleMouseMove(event) {
 // Figuratively, that is. There's nothing moving in this demo.
 //
 function start() {
+    console.info("Game started.");
     canvas = document.getElementById("glcanvas");
+    healthbar = document.getElementById("health");
+    sprintbar = document.getElementById("sprint");
+    healthbarBcg = healthbar.style.backgroundColor;
+    initGame();
     setCanvasSize();
     gl = initGL();      // Initialize the GL context
 
@@ -599,11 +657,12 @@ function start() {
         // Set up to draw the scene periodically.
         setInterval(function () {
             if (texturesLoaded) { // only draw scene and animate when textures are loaded.
-                handleKeys();
-                if (!paused) {
-                    requestAnimationFrame(animate);
-                    drawScene();
+                if (!paused && health) {
+                    handleKeys();
                 }
+                requestAnimationFrame(animate);
+                drawScene();
+
             }
         }, 15);
     }
@@ -620,17 +679,12 @@ function setCanvasSize() {
 function pausedToogle() {
     if (paused) {
         paused = false;
-        document.getElementById("overlay").style.display = "none";
-        console.log("Game resumed.");
-    }
-    else {
+        showStats(false);
+        console.info("Game resumed.");
+    } else {
         paused = true;
-        document.getElementById("overlay").style.display = "inherit";
-        console.log("Game paused.");
-        document.getElementById("distanceTravelled").innerText = distanceTravelled + " steps";
-        document.getElementById("hitsWall").innerText = " To be announced";
-        document.getElementById("eventsSurvived").innerText = " To be announced";
-
+        showStats(true, "Game paused");
+        console.info("Game paused.");
     }
 }
 
@@ -642,6 +696,102 @@ function handleGravity(elapsedTime) {
 
     verticalVelocity -= elapsedTime * 0.001;
     protagonistYPosition += elapsedTime * 0.012 * verticalVelocity;   // fiddle factor
+}
+
+function handleDeath() {
+    if (!protagonist)
+        return;
+
+    console.info("Game ended.");
+    protagonistHeight = 0.2;
+    pitchRate = 0.02;
+    joggingPhase = 0;
+    moveForward = -0.2;
+    setTimeout(function () {
+        moveForward = 0;
+    }, 1500);
+    showStats(true, "Wasted", true);
+    protagonist = false;
+}
+
+function updateHealth(change) {
+    let newHealth = health + change;
+
+    if (newHealth > maxBodyStatus)
+        newHealth = maxBodyStatus;
+
+    if (newHealth < 0)
+        newHealth = 0;
+
+    if (change < 0) {
+        console.info("Ouch " + (-change) + " times! Health is now " + newHealth);
+        healthbar.style.background = "rgba(203, 23, 35, 0.3)";
+        sprintbar.style.background = "rgba(203, 23, 35, 0.3)";
+        healthbar.style.width = newHealth + '%';
+
+        setTimeout(function () {
+            updateSprint(change);
+            sprintbar.style.background = healthbarBcg;
+            healthbar.style.background = healthbarBcg;
+        }, 500);
+
+    } else {
+        console.info("Healthier " + change + " times! Health is now " + newHealth);
+        healthbar.style.background = "rgba(35, 117, 203, 0.6)";
+        sprintbar.style.background = "rgba(35, 117, 203, 0.3)";
+        healthbar.style.width = newHealth + '%';
+
+        setTimeout(function () {
+            updateSprint(change);
+            healthbar.style.background = healthbarBcg;
+            sprintbar.style.background = healthbarBcg;
+        }, 500);
+    }
+
+    health = newHealth;
+
+    return health;
+}
+
+function updateSprint(change) {
+    if (!sprintChargingEnabled && change > 0) {
+        return sprint;
+    }
+
+    let newSprint = sprint + change;
+
+    if (newSprint > health)
+        newSprint = health;
+
+    if (newSprint < 0)
+        newSprint = 0;
+
+    sprintbar.style.width = newSprint + '%';
+    sprint = newSprint;
+
+    return sprint;
+}
+
+function showStats(show = true, title = "", fade = false) {
+    if (show) {
+        let overlay = document.getElementById("overlay");
+
+        if (fade)
+            overlay.classList.add("fade");
+
+        overlay.style.display = "inherit";
+        document.getElementById("title").innerText = title;
+        document.getElementById("distanceTravelled").innerText = distanceTravelled + " steps";
+        document.getElementById("distanceSprinted").innerText = distanceSprinted + " steps";
+        document.getElementById("hitsWall").innerText = " To be announced";
+        document.getElementById("eventsSurvived").innerText = " To be announced";
+
+        setTimeout(function () {
+            overlay.classList.remove("fade");
+        }, 1500);
+    } else {
+        document.getElementById("overlay").style.display = "none";
+    }
 }
 
 /*

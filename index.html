@@ -1,3 +1,4 @@
+<!--suppress HtmlRequiredLangAttribute -->
 <html>
 <head>
     <title>Divje Babe</title>
@@ -96,11 +97,15 @@
 <body onload="start()">
 <div id="content">
     <div id="overlay">
-        <h1>Game paused</h1>
+        <h1 id="title"></h1>
         <table id="stats">
             <tr>
                 <td>Distance travelled:</td>
                 <td id="distanceTravelled"></td>
+            </tr>
+            <tr>
+                <td>Distance sprinted:</td>
+                <td id="distanceSprinted"></td>
             </tr>
             <tr>
                 <td>Hits in the wall:</td>
@@ -111,6 +116,10 @@
                 <td id="eventsSurvived"></td>
             </tr>
         </table>
+    </div>
+    <div class="indicators">
+        <div id="health"></div>
+        <div id="sprint"></div>
     </div>
     <canvas id="glcanvas">
         No <code>&lt;canvas&gt;</code> suppport in your browser.
