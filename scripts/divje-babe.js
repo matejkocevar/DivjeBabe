@@ -64,10 +64,20 @@ let joggingPhase;
 
 //Used for acceleration and gravity;
 let verticalVelocity = 0;
-const floorLevel = 0.0;
 
 // how high is our protagonist aka. on what default yPosition is our first person camera?
 let protagonistHeight = 0.4;
+let protagonistWidth = 0.2;
+
+// HARDCODED
+// Where are the limits of our world
+const xMin = -5.0;
+const zMin = -5.0;
+const xMax = 5.0;
+const zMax = 5.0;
+const yMin = 0.0;
+const yMax = 2.0;
+
 
 // on what Y position are protagonist's feet
 let protagonistYPosition = 0.0;
@@ -506,7 +516,7 @@ function animate() {
 
     }
     handleGravity(elapsed);
-    handleCollisionDetectionFloor();
+    handleCollisionDetectionWorldBorder();
 
     lastTime = timeNow;
 }
@@ -694,7 +704,7 @@ function playSoundFootstep() {
 
 function handleGravity(elapsedTime) {
 
-    verticalVelocity -= elapsedTime * 0.001;
+    verticalVelocity -= elapsedTime * 0.001;   // from milliseconds to seconds
     protagonistYPosition += elapsedTime * 0.012 * verticalVelocity;   // fiddle factor
 }
 
@@ -795,11 +805,27 @@ function showStats(show = true, title = "", fade = false) {
 }
 
 /*
-This function needs to be switched with a proper hit detection method
+This function ensures that we don't fall out of the playable world
  */
-function handleCollisionDetectionFloor() {
-    if (protagonistYPosition < floorLevel) {
+function handleCollisionDetectionWorldBorder() {
+    if (protagonistYPosition < yMin) {
         verticalVelocity = 0.0;
-        protagonistYPosition = floorLevel;
+        protagonistYPosition = yMin;
+    }
+    else if (protagonistYPosition + protagonistHeight + 1 / 14 > yMax) {
+        verticalVelocity = 0.0;
+        protagonistYPosition = yMax - 1 / 14 - protagonistHeight;
+    }
+    if (xPosition + protagonistWidth > xMax) {
+        xPosition = xMax - protagonistWidth;
+    }
+    else if (xPosition - protagonistWidth < xMin) {
+        xPosition = xMin + protagonistWidth;
+    }
+    if (zPosition + protagonistWidth > zMax) {
+        zPosition = zMax - protagonistWidth;
+    }
+    else if (zPosition - protagonistWidth < zMin) {
+        zPosition = zMin + protagonistWidth;
     }
 }
