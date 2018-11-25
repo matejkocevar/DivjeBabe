@@ -75,8 +75,8 @@ const xMin = -5.0;
 const zMin = -5.0;
 const xMax = 5.0;
 const zMax = 5.0;
-const yMin = 0.0;
-const yMax = 2.0;
+const yMin = -1.0;
+const yMax = 1.0;
 
 
 // on what Y position are protagonist's feet
@@ -91,6 +91,41 @@ let lastTime = 0;
 
 // Pause menu state variable
 let paused = false;
+
+// world objects
+var rock = {
+    vertexPositions: [],
+    vertexTextureCoords: [],
+    vertexNormals: [],
+
+    vertexPositionBuffer: null,
+    vertexNormalBuffer: null,
+    vertexTextureCoordBuffer: null,
+    init: function (vertexPositions, vertexTextureCoords, vertexNormals) {
+        this.vertexPositions = vertexPositions.map(function (element) {
+            return element / 4;
+        });
+        this.vertexTextureCoords = vertexTextureCoords.map(function (element) {
+            return element / 4;
+        });
+        this.vertexNormals = vertexNormals.map(function (element) {
+            return element * (-1);
+        });
+    },
+
+    width: 1.25,
+    height: 0.25,
+
+    // center of the object coordinates
+    xPosition: 2,
+    yPosition: -1 + 0.25,
+    zPosition: 2,
+
+    // used for collision detection with the protagonist
+    intersects: [false, false, false, false, false, false],
+    lastIntersect: -1
+
+};
 
 //
 // Matrix utility functions
@@ -357,6 +392,8 @@ function handleLoadedWorld(data) {
         }
     }
 
+    // World
+
     worldVertexPositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STATIC_DRAW);
@@ -374,6 +411,28 @@ function handleLoadedWorld(data) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals), gl.STATIC_DRAW);
     worldVertexNormalBuffer.itemSize = 3;
     worldVertexNormalBuffer.numItems = vertexCount;
+
+    // Objects
+
+    rock.init(vertexPositions, vertexTextureCoords, vertexNormals);
+
+    rock.vertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rock.vertexPositions), gl.STATIC_DRAW);
+    rock.vertexPositionBuffer.itemSize = 3;
+    rock.vertexPositionBuffer.numItems = vertexCount;
+
+    rock.vertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexTextureCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rock.vertexTextureCoords), gl.STATIC_DRAW);
+    rock.vertexTextureCoordBuffer.itemSize = 2;
+    rock.vertexTextureCoordBuffer.numItems = vertexCount;
+
+    rock.vertexNormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexNormalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rock.vertexNormals), gl.STATIC_DRAW);
+    rock.vertexNormalBuffer.itemSize = 3;
+    rock.vertexNormalBuffer.numItems = vertexCount;
 
     document.getElementById("loadingtext").textContent = "";
 }
@@ -429,6 +488,9 @@ function drawScene() {
 
     // Now move the drawing position a bit to where we want to start
     // drawing the world.
+
+    mvPushMatrix();
+
     mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
     mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
     mat4.translate(mvMatrix, [-xPosition, -yPosition, -zPosition]);
@@ -451,9 +513,46 @@ function drawScene() {
     gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexNormalBuffer);
     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, worldVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    // Draw the cube.
+    // Draw the world.
     setMatrixUniforms();
     gl.drawArrays(gl.TRIANGLES, 0, worldVertexPositionBuffer.numItems);
+
+    mvPopMatrix();
+
+    mvPushMatrix();
+
+    mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
+    mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
+    mat4.translate(mvMatrix, [-xPosition, -yPosition, -zPosition]);
+
+    mat4.translate(mvMatrix, [rock.xPosition, rock.yPosition, rock.zPosition]);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition - rock.xPosition, yPosition - rock.yPosition, zPosition - rock.zPosition);
+
+    // Activate textures
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, wallTexture);
+    gl.uniform1i(shaderProgram.samplerUniform, 0);
+
+    // Set the texture coordinates attribute for the vertices.
+    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexTextureCoordBuffer);
+    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, rock.vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    // Draw the world by binding the array buffer to the world's vertices
+    // array, setting attributes, and pushing it to GL.
+    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexPositionBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, rock.vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    // Set the normals attribute for the vertices.
+    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexNormalBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, rock.vertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    // Draw the world.
+    setMatrixUniforms();
+    gl.drawArrays(gl.TRIANGLES, 0, rock.vertexPositionBuffer.numItems);
+
+    mvPopMatrix();
+
+
 }
 
 //
@@ -517,6 +616,7 @@ function animate() {
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
+    handleCollisionDetectionObject();
 
     lastTime = timeNow;
 }
@@ -827,5 +927,91 @@ function handleCollisionDetectionWorldBorder() {
     }
     else if (zPosition - protagonistWidth < zMin) {
         zPosition = zMin + protagonistWidth;
+    }
+}
+
+/*
+intersects[i]:
+i = 0 ... person is left from object on scale X (left means more negative on the scale)
+i = 1 ... person is right from object on scale X (right means more positive on the scale)
+i = 2 ... person is left from object on scale Y
+i = 3 ... person is right from object on scale Y
+i = 4 ... person is left from object on scale Z
+i = 5 ... person is right from object on scale Z
+
+lastIntersect: remembers which intersect did we detect the last, so that the person "bounces" the right way (on either of X, Y, Z in either -1 or 1)
+ */
+function handleCollisionDetectionObject() {
+    if (xPosition + protagonistWidth > rock.xPosition - rock.width) {
+        if (!rock.intersects[0]) {
+            rock.lastIntersect = 0;
+            rock.intersects[0] = true;
+        }
+    } else {
+        rock.intersects[0] = false;
+    }
+    if (xPosition - protagonistWidth < rock.xPosition + rock.width) {
+        if (!rock.intersects[1]) {
+            rock.lastIntersect = 1;
+            rock.intersects[1] = true;
+        }
+    } else {
+        rock.intersects[1] = false;
+    }
+
+    // fix needed perhaps
+    if (protagonistYPosition + protagonistHeight > rock.yPosition - rock.height) {
+        if (!rock.intersects[2]) {
+            rock.lastIntersect = 2;
+            rock.intersects[2] = true;
+        }
+    } else {
+        rock.intersects[2] = false;
+    }
+    if (protagonistYPosition < rock.yPosition + rock.height) {
+        if (!rock.intersects[3]) {
+            rock.lastIntersect = 3;
+            rock.intersects[3] = true;
+        }
+    } else {
+        rock.intersects[3] = false;
+    }
+
+    if (zPosition + protagonistWidth > rock.zPosition - rock.width) {
+        if (!rock.intersects[4]) {
+            rock.lastIntersect = 4;
+            rock.intersects[4] = true;
+        }
+    } else {
+        rock.intersects[4] = false;
+    }
+
+    if (zPosition - protagonistWidth < rock.zPosition + rock.width) {
+        if (!rock.intersects[5]) {
+            rock.lastIntersect = 5;
+            rock.intersects[5] = true;
+        }
+    } else {
+        rock.intersects[5] = false;
+    }
+
+    if (rock.intersects[0] && rock.intersects[1] && rock.intersects[2] && rock.intersects[3] && rock.intersects[4] && rock.intersects[5]) {
+        if (rock.lastIntersect === 0) {
+            xPosition = rock.xPosition - rock.width - protagonistWidth;
+        } else if (rock.lastIntersect === 1) {
+            xPosition = rock.xPosition + rock.width + protagonistWidth;
+        } else if (rock.lastIntersect === 2) {
+            verticalVelocity = 0.0;
+            protagonistYPosition = rock.yPosition - rock.height - protagonistHeight;
+        } else if (rock.lastIntersect === 3) {
+            verticalVelocity = 0.0;
+            protagonistYPosition = rock.yPosition + rock.height;
+        } else if (rock.lastIntersect === 4) {
+            zPosition = rock.zPosition - rock.width - protagonistWidth;
+        } else if (rock.lastIntersect === 5) {
+            zPosition = rock.zPosition + rock.width + protagonistWidth;
+        } else {
+            console.log("Failure calculating lastIntersect: " + rock.lastIntersect);
+        }
     }
 }
