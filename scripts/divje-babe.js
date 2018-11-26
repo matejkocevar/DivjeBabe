@@ -71,6 +71,9 @@ let verticalVelocity = 0;
 let protagonistHeight = 0.4;
 let protagonistWidth = 0.2;
 
+//enemies
+let enemy;
+
 // HARDCODED
 // Where are the limits of our world
 const xMin = -5.0;
@@ -105,10 +108,11 @@ let readDTO = {
     vertexCount: -1
 };
 
-function Object2(scale, xPosition, zPosition) {
+function Object2(scale, xPosition, zPosition, texture) {
     this.scale = scale;
     this.width = scale;
     this.height = scale;
+    this.texture = texture;
 
     this.vertexPositions = [];
     this.vertexTextureCoords = [];
@@ -208,6 +212,8 @@ function handleLoadedObjectData(data) {
     for (let i = 0; i < objects.length; i++) {
         objects[i].handleLoadedObject();
     }
+
+    enemy.handleLoadedObject();
 }
 
 Object2.prototype.draw = function () {
@@ -222,7 +228,7 @@ Object2.prototype.draw = function () {
 
     // Activate textures
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, wallTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.uniform1i(shaderProgram.samplerUniform, 0);
 
     // Set the texture coordinates attribute for the vertices.
@@ -619,6 +625,8 @@ function drawScene() {
     for (let i = 0; i < objects.length; i++) {
         objects[i].draw();
     }
+
+    enemy.draw();
 }
 
 //
@@ -681,6 +689,7 @@ function animate() {
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
+    handleCollisionDetectionEnemy(enemy)
 
     for (let i = 0; i < objects.length; i++)
         handleCollisionDetectionObject(objects[i]);
@@ -827,11 +836,12 @@ function start() {
         // Initialise world objects
         loadWorld();
 
-        let numObjects = 6;
+        enemy = new Object2(1 / 8, 2, 2, enemyTexture);
 
+        let numObjects = 6;
         for (let i = 0; i < numObjects; i++) {
             // Create new object and push it to the objects array
-            objects.push(new Object2(1 / 4, i - 3, -3));
+            objects.push(new Object2(1 / 4, i - 3, -3, wallTexture));
         }
         objects[0].loadObject();
 
@@ -939,6 +949,9 @@ function updateHealth(change) {
 
     health = newHealth;
 
+    if (health <= 0) {
+        handleDeath();
+    }
     return health;
 }
 
@@ -1095,5 +1108,16 @@ function handleCollisionDetectionObject(rock) {
         } else {
             console.log("Failure calculating lastIntersect: " + rock.lastIntersect);
         }
+    }
+}
+
+function handleCollisionDetectionEnemy(rock) {
+    if ((xPosition + protagonistWidth > rock.xPosition - rock.width) &&
+        (xPosition - protagonistWidth < rock.xPosition + rock.width) &&
+        (protagonistYPosition + protagonistHeight > rock.yPosition - rock.height) &&
+        (protagonistYPosition < rock.yPosition + rock.height) &&
+        (zPosition + protagonistWidth > rock.zPosition - rock.width) &&
+        (zPosition - protagonistWidth < rock.zPosition + rock.width)) {
+        updateHealth(-100);
     }
 }
