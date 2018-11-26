@@ -29,9 +29,11 @@ const pMatrix = mat4.create();
 
 // Variables for storing textures
 let wallTexture;
+let enemyTexture;
 
 // Variable that stores  loading state of textures.
-let texturesLoaded = false;
+let texturesLoaded = 0;
+let numOfTextures = 2;
 
 // Keyboard handling helper variable for reading the status of keys
 const currentlyPressedKeys = {};
@@ -88,44 +90,160 @@ let joggingAngle = 0;
 
 // Helper variable for animation
 let lastTime = 0;
+let useTextures = true;
 
 // Pause menu state variable
 let paused = false;
 
 // world objects
-var rock = {
+let objects = [];
+
+let readDTO = {
     vertexPositions: [],
     vertexTextureCoords: [],
     vertexNormals: [],
+    vertexCount: -1
+};
 
-    vertexPositionBuffer: null,
-    vertexNormalBuffer: null,
-    vertexTextureCoordBuffer: null,
-    init: function (vertexPositions, vertexTextureCoords, vertexNormals) {
-        this.vertexPositions = vertexPositions.map(function (element) {
-            return element / 4;
-        });
-        this.vertexTextureCoords = vertexTextureCoords.map(function (element) {
-            return element / 4;
-        });
-        this.vertexNormals = vertexNormals.map(function (element) {
-            return element * (-1);
-        });
-    },
+function Object2(scale, xPosition, zPosition) {
+    this.scale = scale;
+    this.width = scale;
+    this.height = scale;
 
-    width: 1.25,
-    height: 0.25,
+    this.vertexPositions = [];
+    this.vertexTextureCoords = [];
+    this.vertexNormals = [];
+
+    this.vertexPositionBuffer = null;
+    this.vertexNormalBuffer = null;
+    this.vertexTextureCoordBuffer = null;
 
     // center of the object coordinates
-    xPosition: 2,
-    yPosition: -1 + 0.25,
-    zPosition: 2,
+    this.xPosition = xPosition;
+    this.yPosition = -1 + scale;
+    this.zPosition = zPosition;
 
     // used for collision detection with the protagonist
-    intersects: [false, false, false, false, false, false],
-    lastIntersect: -1
+    this.intersects = [false, false, false, false, false, false];
+    this.lastIntersect = -1;
+}
+
+Object2.prototype.handleLoadedObject = function () {
+
+    let scale = this.scale;
+
+    this.vertexPositions = readDTO.vertexPositions.map(function (element) {
+        return (element * scale);
+    });
+    this.vertexTextureCoords = readDTO.vertexTextureCoords.map(function (element) {
+        return element;
+    });
+    this.vertexNormals = readDTO.vertexNormals.map(function (element) {
+        return element;
+    });
+
+    this.vertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertexPositions), gl.STATIC_DRAW);
+    this.vertexPositionBuffer.itemSize = 3;
+    this.vertexPositionBuffer.numItems = readDTO.vertexCount;
+
+    this.vertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexTextureCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertexTextureCoords), gl.STATIC_DRAW);
+    this.vertexTextureCoordBuffer.itemSize = 2;
+    this.vertexTextureCoordBuffer.numItems = readDTO.vertexCount;
+
+    this.vertexNormalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexNormalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertexNormals), gl.STATIC_DRAW);
+    this.vertexNormalBuffer.itemSize = 3;
+    this.vertexNormalBuffer.numItems = readDTO.vertexCount;
 
 };
+
+Object2.prototype.loadObject = function () {
+
+    const request = new XMLHttpRequest();
+    request.open("GET", "./assets/cube.txt");
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            handleLoadedObjectData(request.responseText);
+        }
+    };
+    request.send();
+};
+
+function handleLoadedObjectData(data) {
+
+    const lines = data.split("\n");
+
+    readDTO.vertexCount = 0;
+    readDTO.vertexPositions = [];
+    readDTO.vertexTextureCoords = [];
+    readDTO.vertexNormals = [];
+
+    for (const i in lines) {
+        // noinspection JSUnfilteredForInLoop
+        const vals = lines[i].replace(/^\s+/, "").split(/\s+/);
+        if (vals.length === 8 && vals[0] !== "//") {
+            // It is a line describing a vertex; get X, Y and Z first
+            readDTO.vertexPositions.push(parseFloat(vals[0]));
+            readDTO.vertexPositions.push(parseFloat(vals[1]));
+            readDTO.vertexPositions.push(parseFloat(vals[2]));
+
+            // And then the texture coords
+            readDTO.vertexTextureCoords.push(parseFloat(vals[3]));
+            readDTO.vertexTextureCoords.push(parseFloat(vals[4]));
+
+            // And the normals
+            readDTO.vertexNormals.push(parseFloat(vals[5]));
+            readDTO.vertexNormals.push(parseFloat(vals[6]));
+            readDTO.vertexNormals.push(parseFloat(vals[7]));
+
+            readDTO.vertexCount += 1;
+        }
+    }
+
+    for (let i = 0; i < objects.length; i++) {
+        objects[i].handleLoadedObject();
+    }
+}
+
+Object2.prototype.draw = function () {
+    mvPushMatrix();
+
+    mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
+    mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
+    mat4.translate(mvMatrix, [-xPosition, -yPosition, -zPosition]);
+
+    mat4.translate(mvMatrix, [this.xPosition, this.yPosition, this.zPosition]);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition - this.xPosition, yPosition - this.yPosition, zPosition - this.zPosition);
+
+    // Activate textures
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, wallTexture);
+    gl.uniform1i(shaderProgram.samplerUniform, 0);
+
+    // Set the texture coordinates attribute for the vertices.
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexTextureCoordBuffer);
+    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, this.vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    // Draw the world by binding the array buffer to the world's vertices
+    // array, setting attributes, and pushing it to GL.
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexPositionBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    // Set the normals attribute for the vertices.
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexNormalBuffer);
+    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, this.vertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    // Draw the world.
+    setMatrixUniforms();
+    gl.drawArrays(gl.TRIANGLES, 0, this.vertexPositionBuffer.numItems);
+
+    mvPopMatrix();
+}
 
 //
 // Matrix utility functions
@@ -328,13 +446,15 @@ function setMatrixUniforms() {
 // the texture images. The handleTextureLoaded() callback will finish
 // the job; it gets called each time a texture finishes loading.
 //
-function initTextures() {
-    wallTexture = gl.createTexture();
-    wallTexture.image = new Image();
-    wallTexture.image.onload = function () {
-        handleTextureLoaded(wallTexture)
+function initTextures(texturePath) {
+    let texture = gl.createTexture();
+    texture.image = new Image();
+    texture.image.onload = function () {
+        handleTextureLoaded(texture)
     };
-    wallTexture.image.src = "./assets/wall_cave.jpg";
+    texture.image.src = texturePath;
+
+    return texture;
 }
 
 function handleTextureLoaded(texture) {
@@ -355,7 +475,7 @@ function handleTextureLoaded(texture) {
     gl.bindTexture(gl.TEXTURE_2D, null);
 
     // when texture loading is finished we can draw scene.
-    texturesLoaded = true;
+    texturesLoaded += 1;
 }
 
 //
@@ -412,32 +532,9 @@ function handleLoadedWorld(data) {
     worldVertexNormalBuffer.itemSize = 3;
     worldVertexNormalBuffer.numItems = vertexCount;
 
-    // Objects
-
-    rock.init(vertexPositions, vertexTextureCoords, vertexNormals);
-
-    rock.vertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexPositionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rock.vertexPositions), gl.STATIC_DRAW);
-    rock.vertexPositionBuffer.itemSize = 3;
-    rock.vertexPositionBuffer.numItems = vertexCount;
-
-    rock.vertexTextureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexTextureCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rock.vertexTextureCoords), gl.STATIC_DRAW);
-    rock.vertexTextureCoordBuffer.itemSize = 2;
-    rock.vertexTextureCoordBuffer.numItems = vertexCount;
-
-    rock.vertexNormalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(rock.vertexNormals), gl.STATIC_DRAW);
-    rock.vertexNormalBuffer.itemSize = 3;
-    rock.vertexNormalBuffer.numItems = vertexCount;
-
     document.getElementById("loadingtext").textContent = "";
 }
 
-//
 // loadWorld
 //
 // Loading world
@@ -480,7 +577,7 @@ function drawScene() {
     gl.uniform3f(shaderProgram.ambientColorUniform, 0.1, 0.07, 0.03);
     gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition, yPosition, zPosition);
     gl.uniform3f(shaderProgram.pointLightingColorUniform, 1.0, 0.7, 0.3);
-    gl.uniform1i(shaderProgram.useTexturesUniform, true);
+    gl.uniform1i(shaderProgram.useTexturesUniform, useTextures);
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
@@ -519,40 +616,9 @@ function drawScene() {
 
     mvPopMatrix();
 
-    mvPushMatrix();
-
-    mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
-    mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
-    mat4.translate(mvMatrix, [-xPosition, -yPosition, -zPosition]);
-
-    mat4.translate(mvMatrix, [rock.xPosition, rock.yPosition, rock.zPosition]);
-    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition - rock.xPosition, yPosition - rock.yPosition, zPosition - rock.zPosition);
-
-    // Activate textures
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, wallTexture);
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
-
-    // Set the texture coordinates attribute for the vertices.
-    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexTextureCoordBuffer);
-    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, rock.vertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    // Draw the world by binding the array buffer to the world's vertices
-    // array, setting attributes, and pushing it to GL.
-    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, rock.vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    // Set the normals attribute for the vertices.
-    gl.bindBuffer(gl.ARRAY_BUFFER, rock.vertexNormalBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, rock.vertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    // Draw the world.
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLES, 0, rock.vertexPositionBuffer.numItems);
-
-    mvPopMatrix();
-
-
+    for (let i = 0; i < objects.length; i++) {
+        objects[i].draw();
+    }
 }
 
 //
@@ -568,6 +634,11 @@ function animate() {
 
         elapsed = timeNow - lastTime;
 
+        /* show FPS
+        if (elapsed > 0) {
+            console.log(Math.floor(1000 / elapsed) + " FPS");
+        }
+        */
         const temp = Math.sin(degToRad(joggingAngle));
 
         if (moveForward !== 0 || moveLeft !== 0) {
@@ -576,12 +647,10 @@ function animate() {
             zPosition -= Math.cos(degToRad(yaw)) * moveForward * currentSpeed * elapsed - Math.cos(degToRad(yaw - 90)) * moveLeft * walkingSpeed * 0.7 * elapsed - Math.cos(degToRad(yaw - 90)) * moveForward * currentSpeed * elapsed * joggingAdjust;
 
             joggingAngle += elapsed * 0.5 * currentSpeed / walkingSpeed; // 0.5 "fiddle factor" - makes it feel more realistic :-)
-
             //temp = Math.sin(degToRad(joggingAngle));
             if (joggingPhase * temp < 0) {
                 // the sin would get negative at this point, we detect it to make new step
                 joggingPhase = joggingPhase * (-1);
-
                 distanceTravelled++;
                 playSoundFootstep();
 
@@ -593,12 +662,9 @@ function animate() {
 
             joggingAdjust = temp / 8;
         }
-
         yPosition = joggingPhase * temp / 14 + protagonistHeight + protagonistYPosition;
-
         if (currentSpeed !== sprintingSpeed)
             updateSprint((sprintingSpeed - currentSpeed * (moveForward !== 0 || moveLeft !== 0)) * 30);
-
 
         yaw += yawRate * elapsed;
         pitch += pitchRate * elapsed;
@@ -612,11 +678,12 @@ function animate() {
             pitch = -90;
             pitchRate = 0;
         }
-
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
-    handleCollisionDetectionObject();
+
+    for (let i = 0; i < objects.length; i++)
+        handleCollisionDetectionObject(objects[i]);
 
     lastTime = timeNow;
 }
@@ -649,6 +716,9 @@ function handleKeyUp(event) {
     if (event.keyCode === 189) // -
         if (!updateHealth(-10))
             handleDeath();
+
+    if (event.keyCode === 84) // +
+        useTextures = !useTextures;
 }
 
 //
@@ -751,10 +821,19 @@ function start() {
         initShaders();
 
         // Next, load and set up the textures we'll be using.
-        initTextures();
+        wallTexture = initTextures("./assets/wall_cave.jpg");
+        enemyTexture = initTextures("./assets/evil_face.jpg");
 
         // Initialise world objects
         loadWorld();
+
+        let numObjects = 6;
+
+        for (let i = 0; i < numObjects; i++) {
+            // Create new object and push it to the objects array
+            objects.push(new Object2(1 / 4, i - 3, -3));
+        }
+        objects[0].loadObject();
 
         // Bind keyboard handling functions to document handlers
         document.onkeydown = handleKeyDown;
@@ -766,7 +845,7 @@ function start() {
 
         // Set up to draw the scene periodically.
         setInterval(function () {
-            if (texturesLoaded) { // only draw scene and animate when textures are loaded.
+            if (texturesLoaded === numOfTextures) { // only draw scene and animate when textures are loaded.
                 if (!paused && health) {
                     handleKeys();
                 }
@@ -941,7 +1020,8 @@ i = 5 ... person is right from object on scale Z
 
 lastIntersect: remembers which intersect did we detect the last, so that the person "bounces" the right way (on either of X, Y, Z in either -1 or 1)
  */
-function handleCollisionDetectionObject() {
+function handleCollisionDetectionObject(rock) {
+
     if (xPosition + protagonistWidth > rock.xPosition - rock.width) {
         if (!rock.intersects[0]) {
             rock.lastIntersect = 0;
@@ -994,6 +1074,8 @@ function handleCollisionDetectionObject() {
     } else {
         rock.intersects[5] = false;
     }
+
+    //better use numOfIntersects perhaps???
 
     if (rock.intersects[0] && rock.intersects[1] && rock.intersects[2] && rock.intersects[3] && rock.intersects[4] && rock.intersects[5]) {
         if (rock.lastIntersect === 0) {
