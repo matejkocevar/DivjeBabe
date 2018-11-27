@@ -94,9 +94,9 @@
         }
     </script>
 </head>
-<body onload="start()">
+<body onload="start(true)">
 <div id="content">
-    <div id="overlay">
+    <div id="menu" class="overlay">
         <h1 id="title"></h1>
         <table id="stats">
             <tr>
@@ -116,6 +116,9 @@
                 <td id="eventsSurvived"></td>
             </tr>
         </table>
+    </div>
+    <div id="intro" class="overlay">
+        <button class="drama play" onclick="intro(false)">Play</button>
     </div>
     <div class="indicators">
         <div id="health"></div>

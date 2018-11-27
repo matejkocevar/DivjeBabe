@@ -1,3 +1,5 @@
+let DEBUG = false;
+
 let objectsLoaded = false;
 
 // Gamification variables
@@ -889,8 +891,10 @@ function handleMouseMove(event) {
 // Called when the canvas is created to get the ball rolling.
 // Figuratively, that is. There's nothing moving in this demo.
 //
-function start() {
-    console.info("Game started.");
+function start(debug = false) {
+    DEBUG = debug;
+    console.log("Game started" + (DEBUG ? " in debugging mode." : "."));
+    if (!DEBUG) intro();
     canvas = document.getElementById("glcanvas");
     healthbar = document.getElementById("health");
     sprintbar = document.getElementById("sprint");
@@ -1050,24 +1054,24 @@ function updateSprint(change) {
 }
 
 function showStats(show = true, title = "", fade = false) {
+    let menu = document.getElementById("menu");
     if (show) {
-        let overlay = document.getElementById("overlay");
-
         if (fade)
-            overlay.classList.add("fade");
+            menu.classList.add("fade");
 
-        overlay.style.display = "inherit";
+        menu.style.display = "inherit";
         document.getElementById("title").innerText = title;
+        document.getElementById("stats").style.display = "inline";
         document.getElementById("distanceTravelled").innerText = distanceTravelled + " steps";
         document.getElementById("distanceSprinted").innerText = distanceSprinted + " steps";
         document.getElementById("hitsWall").innerText = " To be announced";
         document.getElementById("eventsSurvived").innerText = " To be announced";
 
         setTimeout(function () {
-            overlay.classList.remove("fade");
+            menu.classList.remove("fade");
         }, 1500);
     } else {
-        document.getElementById("overlay").style.display = "none";
+        menu.style.display = "none";
     }
 }
 
@@ -1200,6 +1204,14 @@ function handleCollisionDetectionEnemy(rock, changeHealth) {
         }, 1500);
         updateHealth(changeHealth);
     }
+}
+
+function intro(show = true) {
+    let intro = document.getElementById("intro").style;
+    intro.display = show ? "inline" : "none";
+
+    //TODO MATEJ: dodaj animacije, ko dobiš layerje
+    //TODO MATEJ: dodaj opise gumbov
 }
 
 function matrikaKratVektor(out, m, a) {

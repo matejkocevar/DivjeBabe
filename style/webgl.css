@@ -28,7 +28,7 @@ td:last-child {
     text-align: left;
 }
 
-#overlay {
+.overlay {
     display: none;
     z-index: 100;
     position: absolute;
@@ -36,6 +36,9 @@ td:last-child {
     right: 0;
     bottom: 0;
     left: 0;
+}
+
+#menu {
     background-color: rgba(0, 0, 0, 0.7);
     color: bisque;
     text-align: center;
@@ -83,6 +86,35 @@ td:last-child {
     left: 150px;
     font-size: 2em;
     color: white;
+}
+
+#intro {
+    cursor: default;
+    background-size: contain;
+    background: #0a0d0f url("../assets/splash/background.png") no-repeat right;
+}
+
+#intro .play {
+    position: absolute;
+    bottom: 10%;
+    left: 10%;
+}
+
+button {
+    cursor: pointer;
+    background-color: transparent;
+    border: 5px solid rgb(243, 210, 141);
+    color: rgb(243, 210, 141);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 3em;
+    font-weight: bold;
+    outline: none;
+}
+
+button.drama:hover {
+    border: 5px solid rgb(198, 64, 14);
+    color: rgb(198, 64, 14);
 }
 
 @keyframes fadein {
