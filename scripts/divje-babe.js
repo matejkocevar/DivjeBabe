@@ -55,6 +55,7 @@ let yPosition;
 let zPosition;
 let moveForward = 0;
 let moveLeft = 0;
+let elapsed;
 
 // Speed
 let walkingSpeed = 0.0025;
@@ -696,7 +697,7 @@ function initObjects() {
 
 function animate() {
     const timeNow = new Date().getTime();
-    let elapsed = 0;
+    elapsed = 0;
 
     if (lastTime !== 0) {
 
@@ -750,7 +751,7 @@ function animate() {
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
-    handleCollisionDetectionEnemy(enemy);
+    handleCollisionDetectionEnemy(enemy, -20);
 
     for (let i = 0; i < objects.length; i++)
         handleCollisionDetectionObject(objects[i]);
@@ -805,13 +806,6 @@ function handleKeyUp(event) {
 
     if (event.keyCode === 82) // R
         initGame();
-
-    // TODO odstrani, ko bo implementirano spreminjanje healtha
-    if (event.keyCode === 187) // +
-        updateHealth(10);
-    if (event.keyCode === 189) // -
-        if (!updateHealth(-10))
-            handleDeath();
 
     if (event.keyCode === 84) // +
         useTextures = !useTextures;
@@ -1192,14 +1186,19 @@ function handleCollisionDetectionObject(rock) {
     }
 }
 
-function handleCollisionDetectionEnemy(rock) {
+function handleCollisionDetectionEnemy(rock, changeHealth) {
     if ((xPosition + protagonistWidth > rock.xPosition - rock.width) &&
         (xPosition - protagonistWidth < rock.xPosition + rock.width) &&
         (protagonistYPosition + protagonistHeight > rock.yPosition - rock.height) &&
         (protagonistYPosition < rock.yPosition + rock.height) &&
         (zPosition + protagonistWidth > rock.zPosition - rock.width) &&
         (zPosition - protagonistWidth < rock.zPosition + rock.width)) {
-        updateHealth(-100);
+        zPosition -= elapsed * 0.02;
+        moveForward = -0.2;
+        setTimeout(function () {
+            moveForward = 0;
+        }, 1500);
+        updateHealth(changeHealth);
     }
 }
 
