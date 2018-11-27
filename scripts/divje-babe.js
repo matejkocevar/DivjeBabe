@@ -14,6 +14,13 @@ let distanceTravelled;
 let distanceSprinted;
 let protagonist;
 
+// Sounds
+let footsteps;
+let dead;
+let ouch;
+let growl;
+let howl;
+
 // Global variable definitionvar canvas;
 let canvas;
 let gl;
@@ -728,11 +735,13 @@ function animate() {
 
             joggingAngle += elapsed * 0.5 * currentSpeed / walkingSpeed; // 0.5 "fiddle factor" - makes it feel more realistic :-)
             //temp = Math.sin(degToRad(joggingAngle));
+
+            playSoundFootstep(joggingPhase);
+
             if (joggingPhase * temp < 0) {
                 // the sin would get negative at this point, we detect it to make new step
                 joggingPhase = joggingPhase * (-1);
                 distanceTravelled++;
-                playSoundFootstep();
 
                 if ((currentSpeed === sprintingSpeed) && sprint) {
                     distanceSprinted++;
@@ -925,8 +934,13 @@ function start(debug = false) {
     console.log("Game started" + (DEBUG ? " in debugging mode." : "."));
     if (!DEBUG) intro();
     canvas = document.getElementById("glcanvas");
-    healthbar = document.getElementById("health");
-    sprintbar = document.getElementById("sprint");
+    footsteps = document.getElementsByClassName("footsteps") || null;
+    dead = document.getElementsByClassName("dead")[0] || null;
+    ouch = document.getElementsByClassName("ouch")[0] || null;
+    growl = document.getElementsByClassName("growl")[0] || null;
+    howl = document.getElementsByClassName("howl")[0] || null;
+    healthbar = document.getElementById("health") || null;
+    sprintbar = document.getElementById("sprint") || null;
     healthbarBcg = healthbar.style.backgroundColor;
     initGame();
     setCanvasSize();
@@ -1010,8 +1024,15 @@ function pausedToogle() {
     }
 }
 
-function playSoundFootstep() {
+function playSoundFootstep(phase) {
 
+    if (!footsteps || !protagonist || verticalVelocity > 0)
+        return false;
+
+    if (phase < 0)
+        footsteps[0].play();
+    else
+        footsteps[footsteps.length - 1].play();
 }
 
 function handleGravity(elapsedTime) {
@@ -1029,6 +1050,7 @@ function handleDeath() {
     pitchRate = 0.02;
     joggingPhase = 0;
     moveForward = -0.2;
+    dead.play();
     setTimeout(function () {
         moveForward = 0;
     }, 1500);
@@ -1046,6 +1068,7 @@ function updateHealth(change) {
         newHealth = 0;
 
     if (change < 0) {
+        ouch.play();
         console.info("Ouch " + (-change) + " times! Health is now " + newHealth);
         healthbar.style.background = "rgba(203, 23, 35, 0.6)";
         sprintbar.style.background = "rgba(203, 23, 35, 0.4)";
@@ -1247,6 +1270,16 @@ function handleCollisionDetectionEnemy(rock, changeHealth) {
             moveForward = 0;
         }, 1500);
         updateHealth(changeHealth);
+    }
+
+
+    const delta = 1.6;
+    if ((xPosition + protagonistWidth + delta > rock.xPosition - rock.width) &&
+        (xPosition - protagonistWidth - delta < rock.xPosition + rock.width) &&
+        (zPosition + protagonistWidth + delta > rock.zPosition - rock.width) &&
+        (zPosition - protagonistWidth - delta < rock.zPosition + rock.width) &&
+        protagonist) {
+        growl.play();
     }
 }
 
