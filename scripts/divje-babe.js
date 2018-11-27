@@ -126,14 +126,16 @@ let readDTO = {
     vertexCount: -1
 };
 
-function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture) {
+function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture, textureScale) {
     this.scaleX = scaleX;
     this.scaleY = scaleY;
     this.scaleZ = scaleZ;
+    this.textureScale = textureScale;
     this.width = scaleX;
     this.height = scaleY;
     this.texture = texture;
     this.yaw = 0;
+    this.pitch = 0;
 
     this.vertexPositions = [];
     this.vertexTextureCoords = [];
@@ -155,12 +157,6 @@ function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture) {
 
 Object2.prototype.handleLoadedObject = function () {
 
-    let scaleX = this.scaleX;
-    /*
-    this.vertexPositions = readDTO.vertexPositions.map(function (element) {
-        return (element * scaleX);
-    });
-    */
     for (let i = 0; i < readDTO.vertexPositions.length; i++) {
         if (i % 3 == 0)
             this.vertexPositions.push(readDTO.vertexPositions[i] * this.scaleX);
@@ -171,9 +167,17 @@ Object2.prototype.handleLoadedObject = function () {
         else
             console.log("Error initialising object");
     }
-    this.vertexTextureCoords = readDTO.vertexTextureCoords.map(function (element) {
-        return element;
-    });
+
+    for (let i = 0; i < readDTO.vertexTextureCoords.length; i++) {
+        if (i % 3 == 0)
+            this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleX * this.textureScale);
+        else if (i % 3 == 1)
+            this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleY * this.textureScale);
+        else if (i % 3 == 2)
+            this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleZ * this.textureScale);
+        else
+            console.log("Error initialising object");
+    }
     this.vertexNormals = readDTO.vertexNormals.map(function (element) {
         return element;
     });
@@ -259,6 +263,7 @@ Object2.prototype.draw = function () {
     mat4.translate(mvMatrix, [this.xPosition, this.yPosition, this.zPosition]);
 
     mat4.rotate(mvMatrix, degToRad(this.yaw), [0, 1, 0]);
+    mat4.rotate(mvMatrix, degToRad(this.pitch), [1, 0, 0]);
 
     gl.uniform3f(shaderProgram.pointLightingLocationUniform, xLight - this.xPosition, yLight - this.yPosition, zLight - this.zPosition);
 
@@ -672,6 +677,23 @@ function drawScene() {
 //
 // Called every time before redrawing the screen.
 //
+
+function initObjects() {
+
+    enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture, 8);
+    torchObject = new Object2(1 / 128, 1 / 12, 1 / 128, 1, 1, torchTexture);
+
+    let numObjects = 6;
+    for (let i = 0; i < numObjects; i++) {
+        // Create new object and push it to the objects array
+        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, -3, wallTexture, 1));
+    }
+    objects[0].loadObject();
+
+    torchWeapon = new Weapon(0.07, -0.075, -0.16);
+
+}
+
 function animate() {
     const timeNow = new Date().getTime();
     let elapsed = 0;
@@ -737,16 +759,30 @@ function animate() {
 
     // weapons
 
+    // rotacija polozaja centra bakle
     torchObject.yaw = yaw;
+    torchObject.pitch = pitch;
 
-    torchObject.xPosition = xPosition + Math.sin(degToRad(yaw)) * torchWeapon.dz + Math.cos(degToRad(yaw)) * torchWeapon.dx;
-    torchObject.yPosition = yPosition + torchWeapon.dy;
-    torchObject.zPosition = zPosition + Math.cos(degToRad(yaw)) * torchWeapon.dz - Math.sin(degToRad(yaw)) * torchWeapon.dx;
+    let matrix = [];
+    mat4.identity(matrix);
+    mat4.rotate(matrix, degToRad(-torchObject.pitch), [1, 0, 0]);
+    mat4.rotate(matrix, degToRad(-torchObject.yaw), [0, 1, 0]);
 
-    xLight = torchObject.xPosition;
-    yLight = torchObject.yPosition + torchObject.height;
-    zLight = torchObject.zPosition;
+    let vektor = [torchWeapon.dx, torchWeapon.dy, torchWeapon.dz, 1];
+    vektor = matrikaKratVektor(vektor, matrix, vektor);
+
+    torchObject.xPosition = xPosition + vektor[0];
+    torchObject.yPosition = yPosition + vektor[1];
+    torchObject.zPosition = zPosition + vektor[2];
+
+    vektor = [0, torchObject.height, 0, 1];
+    vektor = matrikaKratVektor(vektor, matrix, vektor);
+
+    xLight = torchObject.xPosition + vektor[0];
+    yLight = torchObject.yPosition + vektor[1];
+    zLight = torchObject.zPosition + vektor[2];
 }
+
 
 //
 // Keyboard handling helper functions
@@ -888,17 +924,7 @@ function start() {
         // Initialise world objects
         loadWorld();
 
-        enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture);
-        torchObject = new Object2(1 / 128, 1 / 12, 1 / 128, 1, 1, torchTexture);
-
-        let numObjects = 6;
-        for (let i = 0; i < numObjects; i++) {
-            // Create new object and push it to the objects array
-            objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, -3, wallTexture));
-        }
-        objects[0].loadObject();
-
-        torchWeapon = new Weapon(0.07, -0.075, -0.16);
+        initObjects()
 
         // Bind keyboard handling functions to document handlers
         document.onkeydown = handleKeyDown;
@@ -1175,4 +1201,13 @@ function handleCollisionDetectionEnemy(rock) {
         (zPosition - protagonistWidth < rock.zPosition + rock.width)) {
         updateHealth(-100);
     }
+}
+
+function matrikaKratVektor(out, m, a) {
+    let x = a[0], y = a[1], z = a[2], w = a[3];
+    out[0] = m[0] * x + m[1] * y + m[2] * z + m[3] * w;
+    out[1] = m[4] * x + m[5] * y + m[6] * z + m[7] * w;
+    out[2] = m[8] * x + m[9] * y + m[10] * z + m[11] * w;
+    out[3] = m[12] * x + m[13] * y + m[14] * z + m[15] * w;
+    return out;
 }
