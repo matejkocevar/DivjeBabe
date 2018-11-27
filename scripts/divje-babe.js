@@ -178,11 +178,11 @@ Object2.prototype.handleLoadedObject = function () {
     }
 
     for (let i = 0; i < readDTO.vertexTextureCoords.length; i++) {
-        if (i % 3 == 0)
+        if (i % 3 === 0)
             this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleX * this.textureScale);
-        else if (i % 3 == 1)
+        else if (i % 3 === 1)
             this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleY * this.textureScale);
-        else if (i % 3 == 2)
+        else if (i % 3 === 2)
             this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleZ * this.textureScale);
         else
             console.log("Error initialising object");
@@ -300,7 +300,7 @@ Object2.prototype.draw = function () {
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexPositionBuffer.numItems);
 
     mvPopMatrix();
-}
+};
 
 //
 // Matrix utility functions
@@ -770,7 +770,6 @@ function animate() {
     lastTime = timeNow;
 
     // weapons
-    let matrix = [];
 
     // swinging with torch (attacking)
     if (torchAttack !== 0) {
@@ -781,7 +780,7 @@ function animate() {
     torchObject.yaw = yaw;
     torchObject.pitch = pitch + torchWeapon.swingPitch;
 
-    matrix = [];
+    let matrix = [];
     mat4.identity(matrix);
     mat4.rotate(matrix, degToRad(-pitch), [1, 0, 0]);
     mat4.rotate(matrix, degToRad(-yaw), [0, 1, 0]);
@@ -877,7 +876,7 @@ function handleKeys() {
     }
 
 
-    if (currentlyPressedKeys[70] && torchAttack == 0) {
+    if (currentlyPressedKeys[70] && torchAttack === 0) {
         // F (melee attack)
         torchAttack = 1;
     } else {
@@ -952,7 +951,7 @@ function start(debug = false) {
         // Initialise world objects
         loadWorld();
 
-        initObjects()
+        initObjects();
 
         // Bind keyboard handling functions to document handlers
         document.onkeydown = handleKeyDown;
