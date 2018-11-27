@@ -260,7 +260,7 @@ Object2.prototype.draw = function () {
 
     mat4.rotate(mvMatrix, degToRad(this.yaw), [0, 1, 0]);
 
-    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition - this.xPosition, yPosition - this.yPosition, zPosition - this.zPosition);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xLight - this.xPosition, yLight - this.yPosition, zLight - this.zPosition);
 
     // Activate textures
     gl.activeTexture(gl.TEXTURE0);
@@ -617,7 +617,7 @@ function drawScene() {
     //lighting
     gl.uniform1i(shaderProgram.useLightingUniform, true);
     gl.uniform3f(shaderProgram.ambientColorUniform, 0.1, 0.07, 0.03);
-    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition, yPosition, zPosition);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xLight, yLight, zLight);
     gl.uniform3f(shaderProgram.pointLightingColorUniform, 1.0, 0.7, 0.3);
     gl.uniform1i(shaderProgram.useTexturesUniform, useTextures);
 
@@ -725,19 +725,6 @@ function animate() {
             pitchRate = 0;
         }
 
-        // weapons
-
-        torchObject.yaw = yaw;
-
-        torchObject.xPosition = xPosition + Math.sin(degToRad(yaw)) * torchWeapon.dz + Math.cos(degToRad(yaw)) * torchWeapon.dx;
-        torchObject.yPosition = yPosition + torchWeapon.dy;
-        torchObject.zPosition = zPosition + Math.cos(degToRad(yaw)) * torchWeapon.dz - Math.sin(degToRad(yaw)) * torchWeapon.dx;
-
-        /*
-        torchObject.xPosition = xPosition + torchWeapon.dx;
-        torchObject.yPosition = yPosition + torchWeapon.dy;
-        torchObject.zPosition = zPosition + torchWeapon.dz;
-        */
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
@@ -747,6 +734,18 @@ function animate() {
         handleCollisionDetectionObject(objects[i]);
 
     lastTime = timeNow;
+
+    // weapons
+
+    torchObject.yaw = yaw;
+
+    torchObject.xPosition = xPosition + Math.sin(degToRad(yaw)) * torchWeapon.dz + Math.cos(degToRad(yaw)) * torchWeapon.dx;
+    torchObject.yPosition = yPosition + torchWeapon.dy;
+    torchObject.zPosition = zPosition + Math.cos(degToRad(yaw)) * torchWeapon.dz - Math.sin(degToRad(yaw)) * torchWeapon.dx;
+
+    xLight = torchObject.xPosition;
+    yLight = torchObject.yPosition + torchObject.height;
+    zLight = torchObject.zPosition;
 }
 
 //
@@ -890,7 +889,7 @@ function start() {
         loadWorld();
 
         enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture);
-        torchObject = new Object2(1 / 64, 1 / 6, 1 / 64, 1, 1, torchTexture);
+        torchObject = new Object2(1 / 128, 1 / 12, 1 / 128, 1, 1, torchTexture);
 
         let numObjects = 6;
         for (let i = 0; i < numObjects; i++) {
@@ -899,7 +898,7 @@ function start() {
         }
         objects[0].loadObject();
 
-        torchWeapon = new Weapon(0.1, -0.15, -0.25);
+        torchWeapon = new Weapon(0.07, -0.075, -0.16);
 
         // Bind keyboard handling functions to document handlers
         document.onkeydown = handleKeyDown;
