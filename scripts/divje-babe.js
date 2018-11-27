@@ -30,10 +30,11 @@ const pMatrix = mat4.create();
 // Variables for storing textures
 let wallTexture;
 let enemyTexture;
+let torchTexture;
 
 // Variable that stores  loading state of textures.
 let texturesLoaded = 0;
-let numOfTextures = 2;
+let numOfTextures = 3;
 
 // Keyboard handling helper variable for reading the status of keys
 const currentlyPressedKeys = {};
@@ -71,9 +72,6 @@ let verticalVelocity = 0;
 let protagonistHeight = 0.4;
 let protagonistWidth = 0.2;
 
-//enemies
-let enemy;
-
 // HARDCODED
 // Where are the limits of our world
 const xMin = -5.0;
@@ -100,6 +98,26 @@ let paused = false;
 
 // world objects
 let objects = [];
+let torchObject;
+let torchWeapon;
+
+//enemies
+let enemy;
+
+//light
+let xLight;
+let yLight;
+let zLight;
+
+/*
+dx, dy, dz = what is the relative position of the weapon to the protagonist?
+ */
+function Weapon(deltaX, deltaY, deltaZ) {
+    this.dx = deltaX;
+    this.dy = deltaY;
+    this.dz = deltaZ;
+}
+
 
 let readDTO = {
     vertexPositions: [],
@@ -108,11 +126,14 @@ let readDTO = {
     vertexCount: -1
 };
 
-function Object2(scale, xPosition, zPosition, texture) {
-    this.scale = scale;
-    this.width = scale;
-    this.height = scale;
+function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture) {
+    this.scaleX = scaleX;
+    this.scaleY = scaleY;
+    this.scaleZ = scaleZ;
+    this.width = scaleX;
+    this.height = scaleY;
     this.texture = texture;
+    this.yaw = 0;
 
     this.vertexPositions = [];
     this.vertexTextureCoords = [];
@@ -124,7 +145,7 @@ function Object2(scale, xPosition, zPosition, texture) {
 
     // center of the object coordinates
     this.xPosition = xPosition;
-    this.yPosition = -1 + scale;
+    this.yPosition = -1 + scaleY;
     this.zPosition = zPosition;
 
     // used for collision detection with the protagonist
@@ -134,11 +155,22 @@ function Object2(scale, xPosition, zPosition, texture) {
 
 Object2.prototype.handleLoadedObject = function () {
 
-    let scale = this.scale;
-
+    let scaleX = this.scaleX;
+    /*
     this.vertexPositions = readDTO.vertexPositions.map(function (element) {
-        return (element * scale);
+        return (element * scaleX);
     });
+    */
+    for (let i = 0; i < readDTO.vertexPositions.length; i++) {
+        if (i % 3 == 0)
+            this.vertexPositions.push(readDTO.vertexPositions[i] * this.scaleX);
+        else if (i % 3 == 1)
+            this.vertexPositions.push(readDTO.vertexPositions[i] * this.scaleY);
+        else if (i % 3 == 2)
+            this.vertexPositions.push(readDTO.vertexPositions[i] * this.scaleZ);
+        else
+            console.log("Error initialising object");
+    }
     this.vertexTextureCoords = readDTO.vertexTextureCoords.map(function (element) {
         return element;
     });
@@ -214,6 +246,7 @@ function handleLoadedObjectData(data) {
     }
 
     enemy.handleLoadedObject();
+    torchObject.handleLoadedObject();
 }
 
 Object2.prototype.draw = function () {
@@ -224,6 +257,9 @@ Object2.prototype.draw = function () {
     mat4.translate(mvMatrix, [-xPosition, -yPosition, -zPosition]);
 
     mat4.translate(mvMatrix, [this.xPosition, this.yPosition, this.zPosition]);
+
+    mat4.rotate(mvMatrix, degToRad(this.yaw), [0, 1, 0]);
+
     gl.uniform3f(shaderProgram.pointLightingLocationUniform, xPosition - this.xPosition, yPosition - this.yPosition, zPosition - this.zPosition);
 
     // Activate textures
@@ -627,6 +663,8 @@ function drawScene() {
     }
 
     enemy.draw();
+
+    torchObject.draw();
 }
 
 //
@@ -686,10 +724,24 @@ function animate() {
             pitch = -90;
             pitchRate = 0;
         }
+
+        // weapons
+
+        torchObject.yaw = yaw;
+
+        torchObject.xPosition = xPosition + Math.sin(degToRad(yaw)) * torchWeapon.dz + Math.cos(degToRad(yaw)) * torchWeapon.dx;
+        torchObject.yPosition = yPosition + torchWeapon.dy;
+        torchObject.zPosition = zPosition + Math.cos(degToRad(yaw)) * torchWeapon.dz - Math.sin(degToRad(yaw)) * torchWeapon.dx;
+
+        /*
+        torchObject.xPosition = xPosition + torchWeapon.dx;
+        torchObject.yPosition = yPosition + torchWeapon.dy;
+        torchObject.zPosition = zPosition + torchWeapon.dz;
+        */
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
-    handleCollisionDetectionEnemy(enemy)
+    handleCollisionDetectionEnemy(enemy);
 
     for (let i = 0; i < objects.length; i++)
         handleCollisionDetectionObject(objects[i]);
@@ -832,18 +884,22 @@ function start() {
         // Next, load and set up the textures we'll be using.
         wallTexture = initTextures("./assets/wall_cave.jpg");
         enemyTexture = initTextures("./assets/evil_face.jpg");
+        torchTexture = initTextures("./assets/crate.gif");
 
         // Initialise world objects
         loadWorld();
 
-        enemy = new Object2(1 / 8, 2, 2, enemyTexture);
+        enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture);
+        torchObject = new Object2(1 / 64, 1 / 6, 1 / 64, 1, 1, torchTexture);
 
         let numObjects = 6;
         for (let i = 0; i < numObjects; i++) {
             // Create new object and push it to the objects array
-            objects.push(new Object2(1 / 4, i - 3, -3, wallTexture));
+            objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, -3, wallTexture));
         }
         objects[0].loadObject();
+
+        torchWeapon = new Weapon(0.1, -0.15, -0.25);
 
         // Bind keyboard handling functions to document handlers
         document.onkeydown = handleKeyDown;
