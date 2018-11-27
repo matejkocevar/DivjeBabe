@@ -103,6 +103,7 @@ let paused = false;
 let objects = [];
 let torchObject;
 let torchWeapon;
+let lightObject; // for testing only
 
 //enemies
 let enemy;
@@ -112,6 +113,10 @@ let xLight;
 let yLight;
 let zLight;
 
+// attacking
+
+let torchAttack = 0;
+
 /*
 dx, dy, dz = what is the relative position of the weapon to the protagonist?
  */
@@ -119,6 +124,7 @@ function Weapon(deltaX, deltaY, deltaZ) {
     this.dx = deltaX;
     this.dy = deltaY;
     this.dz = deltaZ;
+    this.swingPitch = 0;
 }
 
 
@@ -254,6 +260,7 @@ function handleLoadedObjectData(data) {
 
     enemy.handleLoadedObject();
     torchObject.handleLoadedObject();
+    lightObject.handleLoadedObject();
 }
 
 Object2.prototype.draw = function () {
@@ -673,6 +680,8 @@ function drawScene() {
     enemy.draw();
 
     torchObject.draw();
+
+    lightObject.draw();
 }
 
 //
@@ -684,7 +693,8 @@ function drawScene() {
 function initObjects() {
 
     enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture, 8);
-    torchObject = new Object2(1 / 128, 1 / 12, 1 / 128, 1, 1, torchTexture);
+    torchObject = new Object2(1 / 128, 1 / 8, 1 / 128, 1, 1, torchTexture);
+    lightObject = new Object2(1 / 256, 1 / 256, 1 / 256, 2, 2, enemyTexture);
 
     let numObjects = 6;
     for (let i = 0; i < numObjects; i++) {
@@ -693,8 +703,7 @@ function initObjects() {
     }
     objects[0].loadObject();
 
-    torchWeapon = new Weapon(0.07, -0.075, -0.16);
-
+    torchWeapon = new Weapon(0.07, -0.1, -0.16);
 }
 
 function animate() {
@@ -761,15 +770,21 @@ function animate() {
     lastTime = timeNow;
 
     // weapons
+    let matrix = [];
+
+    // swinging with torch (attacking)
+    if (torchAttack !== 0) {
+        torchSwing(elapsed);
+    }
 
     // rotacija polozaja centra bakle
     torchObject.yaw = yaw;
-    torchObject.pitch = pitch;
+    torchObject.pitch = pitch + torchWeapon.swingPitch;
 
-    let matrix = [];
+    matrix = [];
     mat4.identity(matrix);
-    mat4.rotate(matrix, degToRad(-torchObject.pitch), [1, 0, 0]);
-    mat4.rotate(matrix, degToRad(-torchObject.yaw), [0, 1, 0]);
+    mat4.rotate(matrix, degToRad(-pitch), [1, 0, 0]);
+    mat4.rotate(matrix, degToRad(-yaw), [0, 1, 0]);
 
     let vektor = [torchWeapon.dx, torchWeapon.dy, torchWeapon.dz, 1];
     vektor = matrikaKratVektor(vektor, matrix, vektor);
@@ -779,11 +794,18 @@ function animate() {
     torchObject.zPosition = zPosition + vektor[2];
 
     vektor = [0, torchObject.height, 0, 1];
+    mat4.identity(matrix);
+    mat4.rotate(matrix, degToRad(-torchObject.pitch), [1, 0, 0]);
+    mat4.rotate(matrix, degToRad(-torchObject.yaw), [0, 1, 0]);
     vektor = matrikaKratVektor(vektor, matrix, vektor);
 
     xLight = torchObject.xPosition + vektor[0];
     yLight = torchObject.yPosition + vektor[1];
     zLight = torchObject.zPosition + vektor[2];
+
+    lightObject.xPosition = xLight;
+    lightObject.yPosition = yLight;
+    lightObject.zPosition = zLight;
 }
 
 
@@ -853,6 +875,14 @@ function handleKeys() {
     } else {
         moveForward = 0;
     }
+
+
+    if (currentlyPressedKeys[70] && torchAttack == 0) {
+        // F (melee attack)
+        torchAttack = 1;
+    } else {
+    }
+
 }
 
 function handleMouseDown(event) {
@@ -947,6 +977,21 @@ function start(debug = false) {
 }
 
 window.onresize = setCanvasSize;
+
+function torchSwing(elapsed) {
+    torchWeapon.swingPitch -= torchAttack * elapsed;
+
+    // we change the direction of swing
+    if (torchWeapon.swingPitch < -90) {
+        torchAttack = -1;
+    }
+
+    // end of swing
+    if (torchAttack === -1 && torchWeapon.swingPitch > 0) {
+        torchAttack = 0;
+        torchWeapon.swingPitch = 0;
+    }
+}
 
 function setCanvasSize() {
     canvas.width = window.innerWidth;
