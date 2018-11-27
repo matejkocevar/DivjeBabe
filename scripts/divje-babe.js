@@ -20,6 +20,8 @@ let dead;
 let ouch;
 let growl;
 let howl;
+let swoosh;
+let hit; //TODO JERNEJ: dodaj zaznavanje udarca s palico
 
 // Global variable definitionvar canvas;
 let canvas;
@@ -884,19 +886,16 @@ function handleKeys() {
         moveForward = 0;
     }
 
-
-    if (currentlyPressedKeys[70] && torchAttack === 0) {
-        // F (melee attack)
-        torchAttack = 1;
-    } else {
-    }
-
 }
 
 function handleMouseDown(event) {
     mouseDown = true;
     lastMouseX = event.clientX;
     lastMouseY = event.clientY;
+
+    if (torchAttack === 0) {
+        torchAttack = 1;
+    }
 }
 
 function handleMouseUp() {
@@ -939,6 +938,9 @@ function start(debug = false) {
     ouch = document.getElementsByClassName("ouch")[0] || null;
     growl = document.getElementsByClassName("growl")[0] || null;
     howl = document.getElementsByClassName("howl")[0] || null;
+    swoosh = document.getElementsByClassName("swoosh")[0] || null;
+    hit = document.getElementsByClassName("hit")[0] || null;
+
     healthbar = document.getElementById("health") || null;
     sprintbar = document.getElementById("sprint") || null;
     healthbarBcg = healthbar.style.backgroundColor;
@@ -993,6 +995,7 @@ window.onresize = setCanvasSize;
 
 function torchSwing(elapsed) {
     torchWeapon.swingPitch -= torchAttack * elapsed;
+    swoosh.play();
 
     // we change the direction of swing
     if (torchWeapon.swingPitch < -90) {
