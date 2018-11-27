@@ -1260,7 +1260,11 @@ function handleCollisionDetectionObject(rock) {
     }
 }
 
+// rock == enemy
 function handleCollisionDetectionEnemy(rock, changeHealth) {
+
+    let distance = Math.sqrt((Math.pow(xPosition - rock.xPosition, 2)) + (Math.pow(zPosition - rock.zPosition, 2))) - protagonistWidth - rock.width;
+
     if ((xPosition + protagonistWidth > rock.xPosition - rock.width) &&
         (xPosition - protagonistWidth < rock.xPosition + rock.width) &&
         (protagonistYPosition + protagonistHeight > rock.yPosition - rock.height) &&
@@ -1274,15 +1278,10 @@ function handleCollisionDetectionEnemy(rock, changeHealth) {
         }, 1500);
         updateHealth(changeHealth);
     }
-
-
-    const delta = 1.6;
-    if ((xPosition + protagonistWidth + delta > rock.xPosition - rock.width) &&
-        (xPosition - protagonistWidth - delta < rock.xPosition + rock.width) &&
-        (zPosition + protagonistWidth + delta > rock.zPosition - rock.width) &&
-        (zPosition - protagonistWidth - delta < rock.zPosition + rock.width) &&
-        protagonist) {
+    if (distance < 2) {
         growl.play();
+    } else if (distance < 3.5) {
+        howl.play();
     }
 }
 
