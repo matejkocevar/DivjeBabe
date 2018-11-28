@@ -1026,7 +1026,7 @@ function start(debug = false) {
 window.onresize = setCanvasSize;
 
 function torchSwing(elapsed) {
-    torchWeapon.swingPitch -= torchAttack * elapsed;
+    torchWeapon.swingPitch -= torchAttack * elapsed * 0.5;
     playSound(swoosh);
 
     // we change the direction of swing
@@ -1224,6 +1224,17 @@ function handleCollisionDetectionWorldBorder() {
     else if (zPosition - protagonistWidth < zMin) {
         zPosition = zMin + protagonistWidth;
     }
+
+    if ((xLight + torchObject.width > xMax) ||
+        (xLight - torchObject.width < xMin) ||
+        (yLight + torchObject.width > yMax) ||
+        (yLight - torchObject.width < yMin) ||
+        (zLight + torchObject.width > zMax) ||
+        (zLight - torchObject.width < zMin)) {
+
+        torchAttack = -1;
+        //TODO MATEJ: tukaj z baklo udarimo v kamen, naj se predvaja temu primeren zvok
+    }
 }
 
 /*
@@ -1312,6 +1323,19 @@ function handleCollisionDetectionObject(rock) {
         } else {
             console.log("Failure calculating lastIntersect: " + rock.lastIntersect);
         }
+    }
+
+    //for the torch
+
+    if ((xLight + torchObject.width > rock.xPosition - rock.width) &&
+        (xLight - torchObject.width < rock.xPosition + rock.width) &&
+        (yLight + torchObject.width > rock.yPosition - rock.height) &&
+        (yLight - torchObject.width < rock.yPosition + rock.height) &&
+        (zLight + torchObject.width > rock.zPosition - rock.width) &&
+        (zLight - torchObject.width < rock.zPosition + rock.width)) {
+
+        torchAttack = -1;
+        //TODO MATEJ: tukaj z baklo udarimo v kamen, naj se predvaja temu primeren zvok
     }
 }
 
