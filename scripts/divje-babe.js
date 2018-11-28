@@ -338,6 +338,10 @@ function degToRad(degrees) {
     return degrees * Math.PI / 180;
 }
 
+function radToDeg(rads) {
+    return rads * 180 / Math.PI;
+}
+
 //
 // initGL
 //
@@ -774,7 +778,7 @@ function animate() {
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
-    handleCollisionDetectionEnemy(enemy, -12.5);
+    handleCollisionDetectionEnemy(enemy, -12.5, elapsed);
 
     for (let i = 0; i < objects.length; i++)
         handleCollisionDetectionObject(objects[i]);
@@ -1301,7 +1305,7 @@ function handleCollisionDetectionObject(rock) {
 }
 
 // rock == enemy
-function handleCollisionDetectionEnemy(rock, changeHealth) {
+function handleCollisionDetectionEnemy(rock, changeHealth, elapsedTime) {
 
     let distance = Math.sqrt((Math.pow(xPosition - rock.xPosition, 2)) + (Math.pow(zPosition - rock.zPosition, 2))) - protagonistWidth - rock.width;
 
@@ -1320,9 +1324,29 @@ function handleCollisionDetectionEnemy(rock, changeHealth) {
     }
     if (distance < 2) {
         playSound(growl);
+        handleEnemyMovement(rock, elapsedTime);
     } else if (distance < 3.5) {
         playSound(howl);
     }
+}
+
+function handleEnemyMovement(enemy, elapsedTime) {
+    let dx = xPosition - enemy.xPosition;
+    let dz = zPosition - enemy.zPosition;
+
+    //console.log("dx = " + Math.floor(dx*10) + " dz = " + Math.floor(dz*10));
+    let atan = radToDeg(Math.atan(dx / dz));
+
+    if (dz < 0) {
+        atan = -180 + atan;
+    }
+
+    enemy.yaw = atan;
+
+    //console.log("My yaw = " + Math.floor(yaw) + " enemy.yaw = " + Math.floor(enemy.yaw));
+
+    enemy.xPosition += Math.sin(degToRad(enemy.yaw)) * 0.0015 * elapsedTime;
+    enemy.zPosition += Math.cos(degToRad(enemy.yaw)) * 0.0015 * elapsedTime;
 }
 
 function intro(show = true) {
