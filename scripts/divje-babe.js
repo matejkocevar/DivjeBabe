@@ -1,7 +1,5 @@
 let DEBUG = false;
 
-let objectsLoaded = false;
-
 // Gamification variables
 let maxBodyStatus = 100;
 let health = 0;
@@ -13,6 +11,7 @@ let healthbarBcg;
 let distanceTravelled;
 let distanceSprinted;
 let protagonist;
+let volume = 1;
 
 // HTMLCollections containing HTML audio
 let footsteps;
@@ -365,9 +364,9 @@ function initGL() {
 function initGame() {
     protagonist = true;
     protagonistHeight = 0.4;
-    xPosition = 0;
+    xPosition = -4;
     yPosition = protagonistHeight;
-    zPosition = 0;
+    zPosition = -4;
     moveForward = 0;
     pitch = 0;
     pitchRate = 0;
@@ -844,8 +843,18 @@ function handleKeyUp(event) {
         playSound(oogachaka[1]);
     }
 
-    if (event.keyCode === 84) // +
+    if (event.keyCode === 84) // T
         useTextures = !useTextures;
+
+    if (event.keyCode === 107 && volume < 0.91) { // + key
+        volume += 0.1;
+        console.info("Volume is now " + volume);
+    }
+
+    if (event.keyCode === 109 && volume > 0.01) { // - key
+        volume -= 0.1;
+        console.info("Volume is now " + volume);
+    }
 }
 
 //
@@ -863,11 +872,11 @@ function handleKeys() {
         sprintChargingEnabled = true;
         currentSpeed = walkingSpeed;
     }
+
     if (currentlyPressedKeys[32] && verticalVelocity === 0.0) {
         // space
         verticalVelocity = 0.4;
         playSound(oogachaka[0]);
-    } else {
     }
 
     if (currentlyPressedKeys[37] || currentlyPressedKeys[65]) {
@@ -1164,8 +1173,10 @@ function playSound(sound, forced = false) {
             playSound(sound[0], forced);
         }
 
-        else if (sound)
+        else if (sound) {
+            sound.volume = volume;
             sound.play();
+        }
 
         return true;
     }
