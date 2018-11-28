@@ -284,7 +284,17 @@ Object2.prototype.draw = function () {
     mat4.rotate(mvMatrix, degToRad(this.yaw), [0, 1, 0]);
     mat4.rotate(mvMatrix, degToRad(this.pitch), [1, 0, 0]);
 
-    gl.uniform3f(shaderProgram.pointLightingLocationUniform, xLight - this.xPosition, yLight - this.yPosition, zLight - this.zPosition);
+    // <FIX> (vertex shader isn't working properly)
+    let matrix = [];
+    mat4.identity(matrix);
+    mat4.rotate(matrix, degToRad(this.yaw), [0, 1, 0]);
+    mat4.rotate(matrix, degToRad(this.pitch), [1, 0, 0]);
+
+    let vektor = [xLight - this.xPosition, yLight - this.yPosition, zLight - this.zPosition, 1];
+    vektor = matrikaKratVektor(vektor, matrix, vektor);
+
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform, vektor[0], vektor[1], vektor[2]);
+    // </FIX>
 
     // Activate textures
     gl.activeTexture(gl.TEXTURE0);
@@ -716,6 +726,7 @@ function initObjects() {
         objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, -3, wallTexture, 1));
     }
     objects[0].loadObject();
+    objects[numObjects - 1].yaw = 90;
 
     torchWeapon = new Weapon(0.07, -0.15, -0.16);
 }
