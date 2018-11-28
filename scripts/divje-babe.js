@@ -703,7 +703,7 @@ function drawScene() {
 function initObjects() {
 
     enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture, 8);
-    torchObject = new Object2(1 / 128, 1 / 8, 1 / 128, 1, 1, torchTexture);
+    torchObject = new Object2(1 / 128, 1 / 6, 1 / 128, 1, 1, torchTexture);
     lightObject = new Object2(1 / 256, 1 / 256, 1 / 256, 2, 2, enemyTexture);
 
     let numObjects = 6;
@@ -713,7 +713,7 @@ function initObjects() {
     }
     objects[0].loadObject();
 
-    torchWeapon = new Weapon(0.07, -0.1, -0.16);
+    torchWeapon = new Weapon(0.07, -0.15, -0.16);
 }
 
 function animate() {
