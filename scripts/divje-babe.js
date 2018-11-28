@@ -928,8 +928,10 @@ function handleMouseMove(event) {
     const deltaX = newX - lastMouseX;
     const deltaY = newY - lastMouseY;
 
-    pitch -= deltaY * mouseSensitivity;
-    yaw -= deltaX * mouseSensitivity;
+    if (!paused) {
+        pitch -= deltaY * mouseSensitivity;
+        yaw -= deltaX * mouseSensitivity;
+    }
 
     lastMouseX = newX;
     lastMouseY = newY;
