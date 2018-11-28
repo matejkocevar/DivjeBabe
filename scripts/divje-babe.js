@@ -20,7 +20,6 @@ let ouch;
 let growl;
 let howl;
 let swoosh;
-let hit; //TODO JERNEJ: dodaj zaznavanje udarca s palico
 let oogachaka;
 
 // Global variable definitionvar canvas;
@@ -116,6 +115,7 @@ let lightObject; // for testing only
 
 //enemies
 let enemy;
+let enemyEnemy; // "good" variable name
 
 //light
 let xLight;
@@ -134,8 +134,21 @@ function Weapon(deltaX, deltaY, deltaZ) {
     this.dy = deltaY;
     this.dz = deltaZ;
     this.swingPitch = 0;
+    this.damage = 50;
 }
 
+function Enemy() {
+    this.life = 100;
+    this.alive = true;
+}
+
+Enemy.prototype.inflictDamage = function (damage) {
+    this.life -= damage;
+    if (this.life < 0) {
+        this.alive = false;
+        console.log("enemy ded");
+    }
+}
 
 let readDTO = {
     vertexPositions: [],
@@ -176,11 +189,11 @@ function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture, textureS
 Object2.prototype.handleLoadedObject = function () {
 
     for (let i = 0; i < readDTO.vertexPositions.length; i++) {
-        if (i % 3 == 0)
+        if (i % 3 === 0)
             this.vertexPositions.push(readDTO.vertexPositions[i] * this.scaleX);
-        else if (i % 3 == 1)
+        else if (i % 3 === 1)
             this.vertexPositions.push(readDTO.vertexPositions[i] * this.scaleY);
-        else if (i % 3 == 2)
+        else if (i % 3 === 2)
             this.vertexPositions.push(readDTO.vertexPositions[i] * this.scaleZ);
         else
             console.log("Error initialising object");
@@ -729,6 +742,7 @@ function initObjects() {
     objects[numObjects - 1].yaw = 90;
 
     torchWeapon = new Weapon(0.07, -0.15, -0.16);
+    enemyEnemy = new Enemy();
 }
 
 function animate() {
@@ -789,7 +803,10 @@ function animate() {
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
-    handleCollisionDetectionEnemy(enemy, -12.5, elapsed);
+
+    if (enemyEnemy.alive) {
+        handleCollisionDetectionEnemy(enemy, -12.5, elapsed);
+    }
 
     for (let i = 0; i < objects.length; i++)
         handleCollisionDetectionObject(objects[i]);
@@ -1362,6 +1379,17 @@ function handleCollisionDetectionEnemy(rock, changeHealth, elapsedTime) {
         handleEnemyMovement(rock, elapsedTime);
     } else if (distance < 3.5) {
         playSound(howl);
+    }
+
+    if (torchAttack == 1) {
+        let distance2 = Math.sqrt((Math.pow(xLight - enemy.xPosition, 2)) + (Math.pow(zLight - enemy.zPosition, 2)) + (Math.pow(yLight - enemy.yPosition, 2))) - protagonistWidth - enemy.width;
+
+
+        //adjust this factor
+        if (distance2 < 0.2) {
+            console.log("Enemy hit!");
+            enemyEnemy.inflictDamage(50);
+        }
     }
 }
 
