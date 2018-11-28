@@ -370,6 +370,7 @@ function initGame() {
     moveForward = 0;
     pitch = 0;
     pitchRate = 0;
+    yaw = -90;
     joggingPhase = 1;
     distanceTravelled = 0;
     distanceSprinted = 0;
@@ -773,7 +774,7 @@ function animate() {
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorder();
-    handleCollisionDetectionEnemy(enemy, -20);
+    handleCollisionDetectionEnemy(enemy, -12.5);
 
     for (let i = 0; i < objects.length; i++)
         handleCollisionDetectionObject(objects[i]);
