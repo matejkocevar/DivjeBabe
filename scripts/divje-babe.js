@@ -14,7 +14,7 @@ let distanceTravelled;
 let distanceSprinted;
 let protagonist;
 
-// Sounds
+// HTMLCollections containing HTML audio
 let footsteps;
 let dead;
 let ouch;
@@ -22,6 +22,7 @@ let growl;
 let howl;
 let swoosh;
 let hit; //TODO JERNEJ: dodaj zaznavanje udarca s palico
+let oogachaka;
 
 // Global variable definitionvar canvas;
 let canvas;
@@ -838,8 +839,10 @@ function handleKeyUp(event) {
     if (event.keyCode === 27 && health) // Esc
         pausedToogle();
 
-    if (event.keyCode === 82) // R
+    if (event.keyCode === 82) { // R
         initGame();
+        playSound(oogachaka[1]);
+    }
 
     if (event.keyCode === 84) // +
         useTextures = !useTextures;
@@ -863,6 +866,7 @@ function handleKeys() {
     if (currentlyPressedKeys[32] && verticalVelocity === 0.0) {
         // space
         verticalVelocity = 0.4;
+        playSound(oogachaka[0]);
     } else {
     }
 
@@ -931,21 +935,22 @@ function handleMouseMove(event) {
 function start(debug = false) {
     DEBUG = debug;
     console.log("Game started" + (DEBUG ? " in debugging mode." : "."));
-    if (!DEBUG) intro();
     canvas = document.getElementById("glcanvas");
     footsteps = document.getElementsByClassName("footsteps") || null;
-    dead = document.getElementsByClassName("dead")[0] || null;
-    ouch = document.getElementsByClassName("ouch")[0] || null;
-    growl = document.getElementsByClassName("growl")[0] || null;
-    howl = document.getElementsByClassName("howl")[0] || null;
-    swoosh = document.getElementsByClassName("swoosh")[0] || null;
-    hit = document.getElementsByClassName("hit")[0] || null;
+    dead = document.getElementsByClassName("dead") || null;
+    ouch = document.getElementsByClassName("ouch") || null;
+    growl = document.getElementsByClassName("growl") || null;
+    howl = document.getElementsByClassName("howl") || null;
+    swoosh = document.getElementsByClassName("swoosh") || null;
+    hit = document.getElementsByClassName("hit") || null;
+    oogachaka = document.getElementsByClassName("oogachaka") || null;
 
     healthbar = document.getElementById("health") || null;
     sprintbar = document.getElementById("sprint") || null;
     healthbarBcg = healthbar.style.backgroundColor;
     initGame();
     setCanvasSize();
+    if (!DEBUG) intro();
     gl = initGL();      // Initialize the GL context
 
     // Only continue if WebGL is available and working
@@ -995,7 +1000,7 @@ window.onresize = setCanvasSize;
 
 function torchSwing(elapsed) {
     torchWeapon.swingPitch -= torchAttack * elapsed;
-    swoosh.play();
+    playSound(swoosh);
 
     // we change the direction of swing
     if (torchWeapon.swingPitch < -90) {
@@ -1033,9 +1038,9 @@ function playSoundFootstep(phase) {
         return false;
 
     if (phase < 0)
-        footsteps[0].play();
+        playSound(footsteps[0]);
     else
-        footsteps[footsteps.length - 1].play();
+        playSound(footsteps[footsteps.length - 1]);
 }
 
 function handleGravity(elapsedTime) {
@@ -1053,7 +1058,7 @@ function handleDeath() {
     pitchRate = 0.02;
     joggingPhase = 0;
     moveForward = -0.2;
-    dead.play();
+    playSound(dead);
     setTimeout(function () {
         moveForward = 0;
     }, 1500);
@@ -1071,7 +1076,7 @@ function updateHealth(change) {
         newHealth = 0;
 
     if (change < 0) {
-        ouch.play();
+        playSound(ouch);
         console.info("Ouch " + (-change) + " times! Health is now " + newHealth);
         healthbar.style.background = "rgba(203, 23, 35, 0.6)";
         sprintbar.style.background = "rgba(203, 23, 35, 0.4)";
@@ -1142,6 +1147,27 @@ function showStats(show = true, title = "", fade = false) {
         }, 1500);
     } else {
         menu.style.display = "none";
+    }
+}
+
+function playSound(sound, forced = false) {
+    if (!paused || forced) {
+        if (HTMLCollection.prototype.isPrototypeOf(sound))
+            sound = [...sound]; // Covert from HTMLCollection to array
+
+        if (Array.prototype.isPrototypeOf(sound)) {
+            if (sound[0])
+                sound[0].onended = function () { //Play first array element and call recursion for others
+                    sound.shift();
+                    playSound(sound, forced);
+                };
+            playSound(sound[0], forced);
+        }
+
+        else if (sound)
+            sound.play();
+
+        return true;
     }
 }
 
@@ -1279,15 +1305,22 @@ function handleCollisionDetectionEnemy(rock, changeHealth) {
         updateHealth(changeHealth);
     }
     if (distance < 2) {
-        growl.play();
+        playSound(growl);
     } else if (distance < 3.5) {
-        howl.play();
+        playSound(howl);
     }
 }
 
 function intro(show = true) {
     let intro = document.getElementById("intro").style;
-    intro.display = show ? "inline" : "none";
+    if (show) {
+        intro.display = "inline";
+        paused = true;
+    }
+    else {
+        intro.display = "none";
+        paused = !playSound(oogachaka, true);
+    }
 
     //TODO MATEJ: dodaj animacije, ko dobiš layerje
     //TODO MATEJ: dodaj opise gumbov
