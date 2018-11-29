@@ -654,14 +654,14 @@ function drawScene() {
 
 function initObjects() {
 
-    worldObject = new Object2(5, 5, 5, 0, yMin, 0, wallTexture, 1);
-    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 1);
+    worldObject = new Object2(5, 5, 5, 0, yMin, 0, wallTexture, 2);
+    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 2);
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
 
     let numObjects = 6;
     for (let i = 0; i < numObjects; i++) {
         // Create new object and push it to the objects array...
-        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, yMin, -3, wallTexture, 1));
+        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, yMin, -3, wallTexture, 2));
     }
 
     objects.push(new Object2(5, 1, 5, 0, 1, 0, wallTexture, 1));
