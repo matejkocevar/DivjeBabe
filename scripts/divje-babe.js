@@ -745,7 +745,7 @@ function initObjects() {
 
     let numObjects = 6;
     for (let i = 0; i < numObjects; i++) {
-        // Create new object and push it to the objects array
+        // Create new object and push it to the objects array...
         objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, -3, wallTexture, 1));
     }
     objects[0].loadObject();
