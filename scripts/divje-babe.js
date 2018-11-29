@@ -299,6 +299,7 @@ Object2.prototype.draw = function () {
     mat4.rotate(mvMatrix, degToRad(this.yaw), [0, 1, 0]);
     mat4.rotate(mvMatrix, degToRad(this.pitch), [1, 0, 0]);
 
+
     // <FIX> (vertex shader isn't working properly)
     let matrix = [];
     mat4.identity(matrix);
@@ -838,7 +839,7 @@ function animate() {
     torchObject.yPosition = yPosition + vektor[1];
     torchObject.zPosition = zPosition + vektor[2];
 
-    vektor = [0, torchObject.height, 0, 1];
+    vektor = [0, torchObject.height + torchObject.width, 0, 1];
     mat4.identity(matrix);
     mat4.rotate(matrix, degToRad(-torchObject.pitch), [1, 0, 0]);
     mat4.rotate(matrix, degToRad(-torchObject.yaw), [0, 1, 0]);
@@ -851,6 +852,9 @@ function animate() {
     lightObject.xPosition = xLight;
     lightObject.yPosition = yLight;
     lightObject.zPosition = zLight;
+
+    lightObject.yaw = torchObject.yaw;
+    lightObject.pitch = torchObject.pitch;
 }
 
 
