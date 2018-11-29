@@ -25,6 +25,7 @@ let howl;
 let hit;
 let swoosh;
 let oogachaka;
+let jump;
 
 // Global variable definitionvar canvas;
 let canvas;
@@ -844,7 +845,7 @@ function handleKeys() {
     if (currentlyPressedKeys[32] && verticalVelocity === 0.0) {
         // space
         verticalVelocity = 0.4;
-        playSound(oogachaka[0]);
+        playSound(jump);
     }
 
     if (currentlyPressedKeys[37] || currentlyPressedKeys[65]) {
@@ -923,6 +924,7 @@ function start(debug = false) {
     swoosh = document.getElementsByClassName("swoosh") || null;
     hit = document.getElementsByClassName("hit") || null;
     oogachaka = document.getElementsByClassName("oogachaka") || null;
+    jump = document.getElementsByClassName("jump") || null;
 
     healthbar = document.getElementById("health") || null;
     sprintbar = document.getElementById("sprint") || null;
