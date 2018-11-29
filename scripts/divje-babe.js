@@ -113,8 +113,7 @@ let lightObject;
 let worldObject;
 
 //enemies
-let enemy;
-let enemyEnemy; // "good" variable name
+let enemy; // "good" variable name
 
 //light
 let xLight;
@@ -138,6 +137,7 @@ function Weapon(deltaX, deltaY, deltaZ) {
 }
 
 function Enemy() {
+    this.object = new Object2(1 / 8, 1 / 8, 1 / 8, 2, yMin, 2, enemyTexture, 8);
     this.life = 100;
     this.alive = true;
 }
@@ -290,7 +290,7 @@ function handleLoadedObjectData(data) {
     for (let i = 0; i < objects.length; i++) {
         objects[i].handleLoadedObject(1);
     }
-    enemy.handleLoadedObject(1);
+    enemy.object.handleLoadedObject(1);
     torchObject.handleLoadedObject(1);
     lightObject.handleLoadedObject(1);
 
@@ -632,7 +632,7 @@ function drawScene() {
         objects[i].draw();
     }
     worldObject.draw();
-    enemy.draw();
+    enemy.object.draw();
 
     gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 0.2, 0.2, 0.2);
     torchObject.draw();
@@ -650,7 +650,7 @@ function drawScene() {
 function initObjects() {
 
     worldObject = new Object2(5, 5, 5, 0, yMin, 0, wallTexture, 1);
-    enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, yMin, 2, enemyTexture, 8);
+    //enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, yMin, 2, enemyTexture, 8);
     torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 1);
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
 
@@ -666,7 +666,7 @@ function initObjects() {
     objects[numObjects - 1].yaw = 90;
 
     torchWeapon = new Weapon(0.08, -0.2, -0.18); //-0.18 is stable
-    enemyEnemy = new Enemy();
+    enemy = new Enemy();
 }
 
 function animate() {
@@ -728,15 +728,15 @@ function animate() {
     }
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorderProt();
-    handleCollisionDetectionWorldBorderEnemy(enemy);
+    handleCollisionDetectionWorldBorderEnemy(enemy.object);
 
-    if (enemyEnemy.alive) {
+    if (enemy.alive) {
         handleCollisionDetectionEnemy(enemy, -12.5, elapsed);
     }
 
     for (let i = 0; i < objects.length; i++) {
         handleCollisionDetectionObjectProt(objects[i]);
-        handleCollisionDetectionObjectEnemy(objects[i], enemy)
+        handleCollisionDetectionObjectEnemy(objects[i], enemy.object)
     }
     lastTime = timeNow;
 
@@ -1025,8 +1025,8 @@ function handleGravity(elapsedTime) {
     verticalVelocity -= elapsedTime * 0.001;   // from milliseconds to seconds
     protagonistYPosition += elapsedTime * 0.012 * verticalVelocity;   // fiddle factor
 
-    enemy.verticalVelocity -= elapsedTime * 0.001;   // from milliseconds to seconds
-    enemy.yPosition += elapsedTime * 0.012 * enemy.verticalVelocity;   // fiddle factor
+    enemy.object.verticalVelocity -= elapsedTime * 0.001;   // from milliseconds to seconds
+    enemy.object.yPosition += elapsedTime * 0.012 * enemy.object.verticalVelocity;   // fiddle factor
 }
 
 function handleDeath() {
@@ -1411,14 +1411,14 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
 
 function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
 
-    let distance = Math.sqrt((Math.pow(xPosition - enemy.xPosition, 2)) + (Math.pow(zPosition - enemy.zPosition, 2))) - protagonistWidth - enemy.width;
+    let distance = Math.sqrt((Math.pow(xPosition - enemy.object.xPosition, 2)) + (Math.pow(zPosition - enemy.object.zPosition, 2))) - protagonistWidth - enemy.object.width;
 
-    if ((xPosition + protagonistWidth > enemy.xPosition - enemy.width) &&
-        (xPosition - protagonistWidth < enemy.xPosition + enemy.width) &&
-        (protagonistYPosition + protagonistHeight > enemy.yPosition - enemy.height) &&
-        (protagonistYPosition < enemy.yPosition + enemy.height) &&
-        (zPosition + protagonistWidth > enemy.zPosition - enemy.width) &&
-        (zPosition - protagonistWidth < enemy.zPosition + enemy.width)) {
+    if ((xPosition + protagonistWidth > enemy.object.xPosition - enemy.object.width) &&
+        (xPosition - protagonistWidth < enemy.object.xPosition + enemy.object.width) &&
+        (protagonistYPosition + protagonistHeight > enemy.object.yPosition - enemy.object.height) &&
+        (protagonistYPosition < enemy.object.yPosition + enemy.object.height) &&
+        (zPosition + protagonistWidth > enemy.object.zPosition - enemy.object.width) &&
+        (zPosition - protagonistWidth < enemy.object.zPosition + enemy.object.width)) {
         zPosition -= elapsed * 0.02;
         moveForward = -0.2;
         setTimeout(function () {
@@ -1428,7 +1428,7 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
     }
     if (distance < 2) {
         playSound(growl);
-        handleEnemyMovement(enemy, elapsedTime);
+        handleEnemyMovement(enemy.object, elapsedTime);
     } else if (distance < 3.5) {
         if (lastTime - lastHowled > 5000) {
             playSound(howl);
@@ -1437,12 +1437,12 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
     }
 
     if (torchAttack === 1) {
-        let distance2 = Math.sqrt((Math.pow(xLight - enemy.xPosition, 2)) + (Math.pow(zLight - enemy.zPosition, 2)) + (Math.pow(yLight - enemy.yPosition, 2))) - enemy.width;
+        let distance2 = Math.sqrt((Math.pow(xLight - enemy.object.xPosition, 2)) + (Math.pow(zLight - enemy.object.zPosition, 2)) + (Math.pow(yLight - enemy.object.yPosition, 2))) - enemy.object.width;
 
         //adjust this factor (should be zero)
         if (distance2 < 0.2) {
             console.log("Enemy hit!");
-            enemyEnemy.inflictDamage(50);
+            enemy.inflictDamage(50);
             playSound(hit, false, false);
         }
     }
