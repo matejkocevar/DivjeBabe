@@ -14,7 +14,7 @@ let protagonist;
 let volume = 1;
 let lastHowled;
 
-let firstTime = true;
+let torchPicked = false;
 
 // HTMLCollections containing HTML audio
 let footsteps;
@@ -656,7 +656,7 @@ function drawScene() {
 function initObjects() {
 
     worldObject = new Object2(5, 5, 5, 0, yMin, 0, wallTexture, 2);
-    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 2);
+    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 5);
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
 
     let numObjects = 6;
@@ -754,22 +754,34 @@ function animate() {
     }
 
     // rotacija polozaja centra bakle
-    torchObject.yaw = yaw;
-    torchObject.pitch = 5 + pitch + torchWeapon.swingPitch; // 5 is base bitch
 
+    if (torchPicked) {
+        torchObject.yaw = yaw;
+        torchObject.pitch = 5 + pitch + torchWeapon.swingPitch; // 5 is base bitch
+
+        let matrix = [];
+        mat4.identity(matrix);
+        mat4.rotate(matrix, degToRad(-pitch), [1, 0, 0]);
+        mat4.rotate(matrix, degToRad(-yaw), [0, 1, 0]);
+
+        let vektor = [torchWeapon.dx, torchWeapon.dy, torchWeapon.dz + torchWeapon.dzSwing, 1];
+        vektor = matrikaKratVektor(vektor, matrix, vektor);
+
+        torchObject.xPosition = xPosition + vektor[0];
+        torchObject.yPosition = yPosition + vektor[1];
+        torchObject.zPosition = zPosition + vektor[2];
+    } else {
+        torchObject.pitch = 30;
+        torchObject.yaw = 0;
+
+        torchObject.xPosition = 2;
+        torchObject.yPosition = -0.5;
+        torchObject.zPosition = -4.95;
+    }
+
+    let vektor = [0, torchObject.height + torchObject.width, 0, 1];
     let matrix = [];
-    mat4.identity(matrix);
-    mat4.rotate(matrix, degToRad(-pitch), [1, 0, 0]);
-    mat4.rotate(matrix, degToRad(-yaw), [0, 1, 0]);
 
-    let vektor = [torchWeapon.dx, torchWeapon.dy, torchWeapon.dz + torchWeapon.dzSwing, 1];
-    vektor = matrikaKratVektor(vektor, matrix, vektor);
-
-    torchObject.xPosition = xPosition + vektor[0];
-    torchObject.yPosition = yPosition + vektor[1];
-    torchObject.zPosition = zPosition + vektor[2];
-
-    vektor = [0, torchObject.height + torchObject.width, 0, 1];
     mat4.identity(matrix);
     mat4.rotate(matrix, degToRad(-torchObject.pitch), [1, 0, 0]);
     mat4.rotate(matrix, degToRad(-torchObject.yaw), [0, 1, 0]);
@@ -786,7 +798,6 @@ function animate() {
     lightObject.yaw = torchObject.yaw;
     lightObject.pitch = torchObject.pitch;
 }
-
 
 //
 // Keyboard handling helper functions
@@ -824,6 +835,12 @@ function handleKeyUp(event) {
         volume -= 0.1;
         console.info("Volume is now " + volume);
     }
+
+    if (event.keyCode === 70) {
+        // F is pressed
+        torchPicked = !torchPicked;
+        console.log("You picked up the torch!");
+    }
 }
 
 //
@@ -844,7 +861,7 @@ function handleKeys() {
 
     if (currentlyPressedKeys[32] && verticalVelocity === 0.0) {
         // space
-        verticalVelocity = 0.4;
+        verticalVelocity = 0.35;
         playSound(jump);
     }
 
@@ -867,7 +884,6 @@ function handleKeys() {
     } else {
         moveForward = 0;
     }
-
 }
 
 function handleMouseDown(event) {
@@ -875,7 +891,7 @@ function handleMouseDown(event) {
     lastMouseX = event.clientX;
     lastMouseY = event.clientY;
 
-    if (torchAttack === 0) {
+    if (torchAttack === 0 && torchPicked) {
         torchAttack = 1;
     }
 }
