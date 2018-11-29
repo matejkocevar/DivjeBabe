@@ -13,6 +13,10 @@ let distanceSprinted;
 let protagonist;
 let volume = 1;
 let lastHowled;
+let numberOfSwings;
+let numberOfHitsEnemy;
+let numberOfHitsWall;
+let numberOfEliminations;
 
 let torchPicked = false;
 
@@ -150,7 +154,7 @@ Enemy.prototype.inflictDamage = function (damage) {
     if (this.life < 0) {
         this.alive = false;
         console.log("enemy ded");
-
+        numberOfEliminations += 1;
         respawnEnemy(2, yMin, 2);
     }
 }
@@ -421,6 +425,10 @@ function initGame() {
     distanceTravelled = 0;
     distanceSprinted = 0;
     lastHowled = 0;
+    numberOfSwings = 0;
+    numberOfHitsEnemy = 0;
+    numberOfHitsWall = 0;
+    numberOfEliminations = 0;
     paused = false;
 
     updateHealth(maxBodyStatus);
@@ -1000,6 +1008,7 @@ window.onresize = setCanvasSize;
 function torchSwing(elapsed) {
     torchWeapon.swingPitch -= torchAttack * elapsed * 0.5;
     torchWeapon.dzSwing -= torchAttack * elapsed * 0.002;
+    numberOfSwings += 1;
     playSound(swoosh);
 
     // we change the direction of swing
@@ -1143,8 +1152,9 @@ function showStats(show = true, title = "", fade = false) {
         document.getElementById("stats").style.display = "inline";
         document.getElementById("distanceTravelled").innerText = distanceTravelled + " steps";
         document.getElementById("distanceSprinted").innerText = distanceSprinted + " steps";
-        document.getElementById("hitsWall").innerText = " To be announced";
-        document.getElementById("eventsSurvived").innerText = " To be announced";
+        document.getElementById("hitsWall").innerText = numberOfHitsWall;
+        document.getElementById("eliminations").innerText = numberOfEliminations;
+        document.getElementById("accuracy").innerText = Math.round((numberOfHitsEnemy/numberOfSwings) * 100) +"%";
 
         setTimeout(function () {
             menu.classList.remove("fade");
@@ -1215,6 +1225,7 @@ function handleCollisionDetectionWorldBorderProt() {
 
         if (torchAttack === 1) {
             torchAttack = -1;
+            numberOfHitsWall += 1;
             playSound(hit[0]);
         }
     }
@@ -1345,6 +1356,7 @@ function handleCollisionDetectionObjectProt(rock) {
 
         if (torchAttack === 1) {
             torchAttack = -1;
+            numberOfHitsWall += 1;
             playSound(hit[0]);
         }
     }
@@ -1468,7 +1480,8 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
         //adjust this factor (should be zero)
         if (distance2 < 0.2) {
             console.log("Enemy hit!");
-            enemy.inflictDamage(50);
+            enemy.inflictDamage(50)
+            numberOfHitsEnemy += 1;
             playSound(hit, false, false);
         }
     }
