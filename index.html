@@ -101,7 +101,7 @@
         }
     </script>
 </head>
-<body onload="start(true)">
+<body onload="start()">
 <div id="content">
     <div id="menu" class="overlay">
         <h1 id="title"></h1>
@@ -125,7 +125,34 @@
         </table>
     </div>
     <div id="intro" class="overlay">
+        <div class="eyes"></div>
+        <div class="wolf"></div>
+        <div class="human"></div>
+        <div id="instructions" class="fade">
+            <table>
+                <tr>
+                    <td>Movement/Attack:</td>
+                    <td><img src="assets/controls/movement.svg"></td>
+
+                    <td>Textures On/Off:</td>
+                    <td><img src="assets/controls/textures.svg"></td>
+                </tr>
+                <tr>
+                    <td>Sprint:</td>
+                    <td><img src="assets/controls/sprint.svg"><span>(hold)</span></td>
+
+                    <td>Volume:</td>
+                    <td><img src="assets/controls/volume.svg"></td>
+                </tr>
+                <tr>
+                    <td>Jump:</td>
+                    <td><img src="assets/controls/jump.svg"></td>
+                </tr>
+            </table>
+
+        </div>
         <button class="drama play" onclick="intro(false)">Ooga Chaka!</button>
+
     </div>
     <div class="indicators">
         <div id="health"></div>

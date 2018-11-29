@@ -594,6 +594,7 @@ function handleTextureLoaded(texture) {
     // when texture loading is finished we can draw scene.
     texturesLoaded += 1;
 }
+
 //
 // drawScene
 //
@@ -820,7 +821,7 @@ function handleKeyUp(event) {
 
     if (event.keyCode === 82) { // R
         initGame();
-        playSound(oogachaka[1]);
+        playSound(oogachaka[0]);
     }
 
     if (event.keyCode === 84) // T
@@ -1447,7 +1448,9 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
         setTimeout(function () {
             moveForward = 0;
         }, 1500);
-        updateHealth(changeHealth);
+
+        if (protagonist)
+            updateHealth(changeHealth);
     }
     if (distance < 2) {
         playSound(growl);
@@ -1497,8 +1500,6 @@ function intro(show = true) {
         paused = !playSound(oogachaka, true);
     }
 
-    //TODO MATEJ: dodaj animacije, ko dobiš layerje
-    //TODO MATEJ: dodaj opise gumbov
 }
 
 function respawnEnemy(x, y, z) {

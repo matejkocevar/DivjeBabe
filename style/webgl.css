@@ -1,7 +1,7 @@
 body {
     font-family: "Arial", sans-serif;
     background-color: black;
-    color: whitesmoke;
+    color: rgb(243, 210, 141);
     margin: 0;
 }
 
@@ -85,19 +85,95 @@ td:last-child {
     top: 250px;
     left: 150px;
     font-size: 2em;
-    color: white;
 }
 
 #intro {
     cursor: default;
-    background-size: contain;
     background: #0a0d0f url("../assets/splash/background.png") no-repeat right;
+    background-size: auto 100vh;
+    overflow: hidden;
 }
 
 #intro .play {
+    z-index: 50;
     position: absolute;
-    bottom: 10%;
-    left: 10%;
+    bottom: 2%;
+    left: 40%;
+}
+
+#intro .eyes {
+    z-index: 4;
+    position: absolute;
+    top: 54vh;
+    left: 0;
+    right: 132vh;
+    bottom: 0;
+    background: url("../assets/splash/wolf_eyes.png") no-repeat right;
+    background-size: auto 46vh;
+    -webkit-animation: slideEyes 5s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: slideEyes 5s; /* Firefox < 16 */
+    -ms-animation: slideEyes 5s; /* Internet Explorer */
+    -o-animation: slideEyes 5s; /* Opera < 12.1 */
+    animation: slideEyes 5s;
+}
+#intro .wolf {
+    z-index: 4;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 95vh;
+    bottom: 22vh;
+    background: url("../assets/splash/wolf_jump.png") no-repeat right;
+    background-size: auto 79vh;
+    -webkit-animation: slideWolf 4s; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: slideWolf 4s; /* Firefox < 16 */
+    -ms-animation: slideWolf 4s; /* Internet Explorer */
+    -o-animation: slideWolf 4s; /* Opera < 12.1 */
+    animation: slideWolf 4s;
+
+}
+#intro .human {
+    z-index: 4;
+    position: absolute;
+    top: 5vh;
+    left: 39vh;
+    right: 0;
+    bottom: 0;
+    background: url("../assets/splash/human.png") no-repeat right;
+    background-size: auto 95vh;
+    animation-delay: 4s;
+    -webkit-animation: slideHuman 2s ; /* Safari, Chrome and Opera > 12.1 */
+    -moz-animation: slideHuman 2s; /* Firefox < 16 */
+    -ms-animation: slideHuman 2s; /* Internet Explorer */
+    -o-animation: slideHuman 2s; /* Opera < 12.1 */
+    animation: slideHuman 2s;
+}
+
+#intro #instructions {
+    position: absolute;
+    z-index: 50;
+    margin-top: 65vh;
+    background-color: rgba(10, 13, 15, 0.5);
+}
+
+#intro #instructions table {
+    width: 80%;
+}
+
+#intro #instructions td {
+    font-weight: bold;
+    padding: 1vh;
+}
+
+#intro #instructions td span {
+    font-weight: normal;
+    position: fixed;
+    line-height: 4vh;
+    margin-left: 1vh;
+}
+
+#intro #instructions img {
+    max-height: 4vh;
 }
 
 button {
@@ -163,5 +239,63 @@ button.drama:hover {
     }
     to {
         opacity: 1;
+    }
+}
+
+@keyframes slideEyes {
+    from {
+        right: 151vh;
+    }
+    to {
+        right: 132vh;
+    }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes slideEyes {
+    from {
+        right: 151vh;
+    }
+    to {
+        right: 132vh;
+    }
+}
+
+
+@keyframes slideHuman {
+    from {
+        right: -70vh;
+    }
+    to {
+        right: 0;
+    }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes slideHuman {
+    from {
+        right: -90vh;
+    }
+    to {
+        right: 0;
+    }
+}
+
+@keyframes slideWolf {
+    from {
+        right: 152vh;
+    }
+    to {
+        right: 95vh;
+    }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes slideWolf {
+    from {
+        right: 152vh;
+    }
+    to {
+        right: 95vh;
     }
 }
