@@ -12,6 +12,7 @@ let distanceTravelled;
 let distanceSprinted;
 let protagonist;
 let volume = 1;
+let lastHowled;
 
 // HTMLCollections containing HTML audio
 let footsteps;
@@ -409,6 +410,7 @@ function initGame() {
     joggingPhase = 1;
     distanceTravelled = 0;
     distanceSprinted = 0;
+    lastHowled = 0;
     paused = false;
 
     updateHealth(maxBodyStatus);
@@ -765,7 +767,8 @@ function animate() {
 
     if (lastTime !== 0) {
 
-        elapsed = timeNow - lastTime;
+        if (!paused)
+            elapsed = timeNow - lastTime;
 
         /* show FPS
         if (elapsed > 0) {
@@ -1215,18 +1218,22 @@ function showStats(show = true, title = "", fade = false) {
     }
 }
 
-function playSound(sound, forced = false) {
+function playSound(sound, forced = false, sequential = true) {
     if (!paused || forced) {
         if (HTMLCollection.prototype.isPrototypeOf(sound))
             sound = [...sound]; // Covert from HTMLCollection to array
 
         if (Array.prototype.isPrototypeOf(sound)) {
-            if (sound[0])
+            if (!sequential) {
+                for (let s in sound)
+                    playSound(sound[s], forced, sequential);
+            }
+            else if (sound[0])
                 sound[0].onended = function () { //Play first array element and call recursion for others
                     sound.shift();
-                    playSound(sound, forced);
+                    playSound(sound, forced, sequential);
                 };
-            playSound(sound[0], forced);
+            playSound(sound[0], forced, sequential);
         }
 
         else if (sound) {
@@ -1272,7 +1279,7 @@ function handleCollisionDetectionWorldBorder() {
 
         if (torchAttack == 1) {
             torchAttack = -1;
-            playSound(hit);
+            playSound(hit[0]);
         }
     }
 }
@@ -1376,7 +1383,7 @@ function handleCollisionDetectionObjectProt(rock) {
 
         if (torchAttack === 1) {
             torchAttack = -1;
-            playSound(hit);
+            playSound(hit[0]);
         }
     }
 }
@@ -1481,7 +1488,10 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
         playSound(growl);
         handleEnemyMovement(enemy, elapsedTime);
     } else if (distance < 3.5) {
-        playSound(howl);
+        if (lastTime - lastHowled > 5000) {
+            playSound(howl);
+            lastHowled = lastTime;
+        }
     }
 
     if (torchAttack == 1) {
@@ -1491,8 +1501,7 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
         if (distance2 < 0.2) {
             console.log("Enemy hit!");
             enemyEnemy.inflictDamage(50);
-
-            //TODO Matej : naj se predvaja zvok ko zadeneš volka
+            playSound(hit, false, false);
         }
     }
 }
