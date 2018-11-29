@@ -14,6 +14,8 @@ let protagonist;
 let volume = 1;
 let lastHowled;
 
+let firstTime = true;
+
 // HTMLCollections containing HTML audio
 let footsteps;
 let dead;
@@ -136,8 +138,8 @@ function Weapon(deltaX, deltaY, deltaZ) {
     this.dzSwing = 0;
 }
 
-function Enemy() {
-    this.object = new Object2(1 / 8, 1 / 8, 1 / 8, 2, yMin, 2, enemyTexture, 8);
+function Enemy(x, y, z) {
+    this.object = new Object2(1 / 8, 1 / 8, 1 / 8, x, y, z, enemyTexture, 8);
     this.life = 100;
     this.alive = true;
 }
@@ -147,6 +149,8 @@ Enemy.prototype.inflictDamage = function (damage) {
     if (this.life < 0) {
         this.alive = false;
         console.log("enemy ded");
+
+        respawnEnemy(2, yMin, 2);
     }
 }
 
@@ -422,6 +426,7 @@ function initGame() {
     showStats(false);
 }
 
+
 //
 // getShader
 //
@@ -650,7 +655,6 @@ function drawScene() {
 function initObjects() {
 
     worldObject = new Object2(5, 5, 5, 0, yMin, 0, wallTexture, 1);
-    //enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, yMin, 2, enemyTexture, 8);
     torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 1);
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
 
@@ -662,11 +666,12 @@ function initObjects() {
 
     objects.push(new Object2(5, 1, 5, 0, 1, 0, wallTexture, 1));
 
+    enemy = new Enemy(2, yMin, 2);
+
     objects[0].loadObject("./assets/cube.txt");
     objects[numObjects - 1].yaw = 90;
 
     torchWeapon = new Weapon(0.08, -0.2, -0.18); //-0.18 is stable
-    enemy = new Enemy();
 }
 
 function animate() {
@@ -1476,6 +1481,11 @@ function intro(show = true) {
 
     //TODO MATEJ: dodaj animacije, ko dobiš layerje
     //TODO MATEJ: dodaj opise gumbov
+}
+
+function respawnEnemy(x, y, z) {
+    enemy = new Enemy(x, y, z);
+    enemy.object.handleLoadedObject(1);
 }
 
 function matrikaKratVektor(out, m, a) {
