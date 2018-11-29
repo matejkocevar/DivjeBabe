@@ -939,7 +939,7 @@ function start(debug = false) {
         initShaders();
 
         // Next, load and set up the textures we'll be using.
-        wallTexture = initTextures("./assets/wall_cave.jpg");
+        wallTexture = initTextures("./assets/dirtwall.jpg");
         enemyTexture = initTextures("./assets/evil_face.jpg");
         torchTexture = initTextures("./assets/crate.gif");
         flameTexture = initTextures("./assets/flame.jpg");
