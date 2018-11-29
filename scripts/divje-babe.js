@@ -29,11 +29,6 @@ let canvas;
 let gl;
 let shaderProgram;
 
-// Buffers
-let worldVertexPositionBuffer = null;
-let worldVertexNormalBuffer = null;
-let worldVertexTextureCoordBuffer = null;
-
 // Model-view and projection matrix and model-view matrix stack
 let mvMatrixStack = [];
 let mvMatrix = mat4.create();
@@ -114,7 +109,8 @@ let paused = false;
 let objects = [];
 let torchObject;
 let torchWeapon;
-let lightObject; // for testing only
+let lightObject;
+let worldObject;
 
 //enemies
 let enemy;
@@ -161,7 +157,7 @@ let readDTO = {
     vertexCount: -1
 };
 
-function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture, textureScale) {
+function Object2(scaleX, scaleY, scaleZ, xPosition, yPosition, zPosition, texture, textureScale) {
     this.scaleX = scaleX;
     this.scaleY = scaleY;
     this.scaleZ = scaleZ;
@@ -171,6 +167,7 @@ function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture, textureS
     this.texture = texture;
     this.yaw = 0;
     this.pitch = 0;
+    this.verticalVelocity = 0;
 
     this.vertexPositions = [];
     this.vertexTextureCoords = [];
@@ -182,7 +179,7 @@ function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture, textureS
 
     // center of the object coordinates
     this.xPosition = xPosition;
-    this.yPosition = -1 + scaleY;
+    this.yPosition = yPosition + scaleY;
     this.zPosition = zPosition;
 
     // used for collision detection with the protagonist
@@ -194,7 +191,12 @@ function Object2(scaleX, scaleY, scaleZ, xPosition, zPosition, texture, textureS
     this.lastIntersectEnemy = -1;
 }
 
-Object2.prototype.handleLoadedObject = function () {
+Object2.prototype.jump = function () {
+    if (this.verticalVelocity === 0) {
+        this.verticalVelocity = 0.3;
+    }
+}
+Object2.prototype.handleLoadedObject = function (normalDirection) {
 
     for (let i = 0; i < readDTO.vertexPositions.length; i++) {
         if (i % 3 === 0)
@@ -207,18 +209,17 @@ Object2.prototype.handleLoadedObject = function () {
             console.log("Error initialising object");
     }
 
+    // fix needed : not correct scaling
     for (let i = 0; i < readDTO.vertexTextureCoords.length; i++) {
-        if (i % 3 === 0)
+        if (i % 2 === 0)
             this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleX * this.textureScale);
-        else if (i % 3 === 1)
-            this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleY * this.textureScale);
-        else if (i % 3 === 2)
-            this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleZ * this.textureScale);
+        else if (i % 2 === 1)
+            this.vertexTextureCoords.push(readDTO.vertexTextureCoords[i] * this.scaleX * this.textureScale);
         else
             console.log("Error initialising object");
     }
     this.vertexNormals = readDTO.vertexNormals.map(function (element) {
-        return element;
+        return element * normalDirection;
     });
 
     this.vertexPositionBuffer = gl.createBuffer();
@@ -241,10 +242,10 @@ Object2.prototype.handleLoadedObject = function () {
 
 };
 
-Object2.prototype.loadObject = function () {
+Object2.prototype.loadObject = function (pathToFile) {
 
     const request = new XMLHttpRequest();
-    request.open("GET", "./assets/cube.txt");
+    request.open("GET", pathToFile);
     request.onreadystatechange = function () {
         if (request.readyState === 4) {
             handleLoadedObjectData(request.responseText);
@@ -284,13 +285,17 @@ function handleLoadedObjectData(data) {
         }
     }
 
-    for (let i = 0; i < objects.length; i++) {
-        objects[i].handleLoadedObject();
-    }
+    worldObject.handleLoadedObject(-1);
 
-    enemy.handleLoadedObject();
-    torchObject.handleLoadedObject();
-    lightObject.handleLoadedObject();
+    for (let i = 0; i < objects.length; i++) {
+        objects[i].handleLoadedObject(1);
+    }
+    enemy.handleLoadedObject(1);
+    torchObject.handleLoadedObject(1);
+    lightObject.handleLoadedObject(1);
+
+
+    document.getElementById("loadingtext").textContent = "";
 }
 
 Object2.prototype.draw = function () {
@@ -583,79 +588,6 @@ function handleTextureLoaded(texture) {
     // when texture loading is finished we can draw scene.
     texturesLoaded += 1;
 }
-
-//
-// handleLoadedWorld
-//
-// Initialisation of world
-//
-function handleLoadedWorld(data) {
-    const lines = data.split("\n");
-    let vertexCount = 0;
-    const vertexPositions = [];
-    const vertexTextureCoords = [];
-    const vertexNormals = [];
-
-    for (const i in lines) {
-        // noinspection JSUnfilteredForInLoop
-        const vals = lines[i].replace(/^\s+/, "").split(/\s+/);
-        if (vals.length === 8 && vals[0] !== "//") {
-            // It is a line describing a vertex; get X, Y and Z first
-            vertexPositions.push(parseFloat(vals[0]));
-            vertexPositions.push(parseFloat(vals[1]));
-            vertexPositions.push(parseFloat(vals[2]));
-
-            // And then the texture coords
-            vertexTextureCoords.push(parseFloat(vals[3]));
-            vertexTextureCoords.push(parseFloat(vals[4]));
-
-            // And the normals
-            vertexNormals.push(parseFloat(vals[5]));
-            vertexNormals.push(parseFloat(vals[6]));
-            vertexNormals.push(parseFloat(vals[7]));
-
-            vertexCount += 1;
-        }
-    }
-
-    // World
-
-    worldVertexPositionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STATIC_DRAW);
-    worldVertexPositionBuffer.itemSize = 3;
-    worldVertexPositionBuffer.numItems = vertexCount;
-
-    worldVertexTextureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexTextureCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexTextureCoords), gl.STATIC_DRAW);
-    worldVertexTextureCoordBuffer.itemSize = 2;
-    worldVertexTextureCoordBuffer.numItems = vertexCount;
-
-    worldVertexNormalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexNormalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals), gl.STATIC_DRAW);
-    worldVertexNormalBuffer.itemSize = 3;
-    worldVertexNormalBuffer.numItems = vertexCount;
-
-    document.getElementById("loadingtext").textContent = "";
-}
-
-// loadWorld
-//
-// Loading world
-//
-function loadWorld() {
-    const request = new XMLHttpRequest();
-    request.open("GET", "./assets/world_cave.txt");
-    request.onreadystatechange = function () {
-        if (request.readyState === 4) {
-            handleLoadedWorld(request.responseText);
-        }
-    };
-    request.send();
-}
-
 //
 // drawScene
 //
@@ -667,10 +599,12 @@ function drawScene() {
     // Clear the canvas before we start drawing on it.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+
     // If buffers are empty we stop loading the application.
-    if (worldVertexTextureCoordBuffer == null || worldVertexPositionBuffer == null) {
+    if (worldObject.vertexTextureCoordBuffer == null || worldObject.vertexPositionBuffer == null) {
         return;
     }
+
 
     // Establish the perspective with which we want to view the
     // scene. Our field of view is 45 degrees, with a width/height
@@ -694,40 +628,10 @@ function drawScene() {
     // Now move the drawing position a bit to where we want to start
     // drawing the world.
 
-    mvPushMatrix();
-
-    mat4.rotate(mvMatrix, degToRad(-pitch), [1, 0, 0]);
-    mat4.rotate(mvMatrix, degToRad(-yaw), [0, 1, 0]);
-    mat4.translate(mvMatrix, [-xPosition, -yPosition, -zPosition]);
-
-    // Activate textures
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, wallTexture);
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
-
-    // Set the texture coordinates attribute for the vertices.
-    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexTextureCoordBuffer);
-    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, worldVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    // Draw the world by binding the array buffer to the world's vertices
-    // array, setting attributes, and pushing it to GL.
-    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, worldVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    // Set the normals attribute for the vertices.
-    gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexNormalBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, worldVertexNormalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    // Draw the world.
-    setMatrixUniforms();
-    gl.drawArrays(gl.TRIANGLES, 0, worldVertexPositionBuffer.numItems);
-
-    mvPopMatrix();
-
     for (let i = 0; i < objects.length; i++) {
         objects[i].draw();
     }
-
+    worldObject.draw();
     enemy.draw();
 
     gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 0.2, 0.2, 0.2);
@@ -745,16 +649,20 @@ function drawScene() {
 
 function initObjects() {
 
-    enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture, 8);
-    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, 1, wallTexture, 1);
-    lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, 2, flameTexture, 96);
+    worldObject = new Object2(5, 5, 5, 0, yMin, 0, wallTexture, 1);
+    enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, yMin, 2, enemyTexture, 8);
+    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 1);
+    lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
 
     let numObjects = 6;
     for (let i = 0; i < numObjects; i++) {
         // Create new object and push it to the objects array...
-        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, -3, wallTexture, 1));
+        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, yMin, -3, wallTexture, 1));
     }
-    objects[0].loadObject();
+
+    objects.push(new Object2(5, 1, 5, 0, 1, 0, wallTexture, 1));
+
+    objects[0].loadObject("./assets/cube.txt");
     objects[numObjects - 1].yaw = 90;
 
     torchWeapon = new Weapon(0.08, -0.2, -0.18); //-0.18 is stable
@@ -819,7 +727,8 @@ function animate() {
 
     }
     handleGravity(elapsed);
-    handleCollisionDetectionWorldBorder();
+    handleCollisionDetectionWorldBorderProt();
+    handleCollisionDetectionWorldBorderEnemy(enemy);
 
     if (enemyEnemy.alive) {
         handleCollisionDetectionEnemy(enemy, -12.5, elapsed);
@@ -1036,7 +945,7 @@ function start(debug = false) {
         flameTexture = initTextures("./assets/flame.jpg");
 
         // Initialise world objects
-        loadWorld();
+        //loadWorld();
 
         initObjects();
 
@@ -1115,6 +1024,9 @@ function handleGravity(elapsedTime) {
 
     verticalVelocity -= elapsedTime * 0.001;   // from milliseconds to seconds
     protagonistYPosition += elapsedTime * 0.012 * verticalVelocity;   // fiddle factor
+
+    enemy.verticalVelocity -= elapsedTime * 0.001;   // from milliseconds to seconds
+    enemy.yPosition += elapsedTime * 0.012 * enemy.verticalVelocity;   // fiddle factor
 }
 
 function handleDeath() {
@@ -1248,14 +1160,14 @@ function playSound(sound, forced = false, sequential = true) {
 /*
 This function ensures that we don't fall out of the playable world
  */
-function handleCollisionDetectionWorldBorder() {
+function handleCollisionDetectionWorldBorderProt() {
     if (protagonistYPosition < yMin) {
         verticalVelocity = 0.0;
         protagonistYPosition = yMin;
     }
-    else if (protagonistYPosition + protagonistHeight + 1 / 14 > yMax) {
+    else if (protagonistYPosition + protagonistHeight + protagonistWidth + 0.02 > yMax) {  // fiddle factor
         verticalVelocity = 0.0;
-        protagonistYPosition = yMax - 1 / 14 - protagonistHeight;
+        protagonistYPosition = yMax - protagonistWidth - protagonistHeight - 0.02;
     }
     if (xPosition + protagonistWidth > xMax) {
         xPosition = xMax - protagonistWidth;
@@ -1277,11 +1189,37 @@ function handleCollisionDetectionWorldBorder() {
         (zLight + torchObject.width > zMax) ||
         (zLight - torchObject.width < zMin)) {
 
-        if (torchAttack == 1) {
+        if (torchAttack === 1) {
             torchAttack = -1;
             playSound(hit[0]);
         }
     }
+}
+
+function handleCollisionDetectionWorldBorderEnemy(enemy) {
+    if (enemy.yPosition - enemy.height < yMin) {
+        enemy.verticalVelocity = 0.0;
+        enemy.yPosition = yMin + enemy.height;
+    }
+    // uncomment if needed
+    /*
+    else if (enemy.yPosition + enemy.height > yMax) {
+        verticalVelocity = 0.0;
+        enemy.yPosition = yMax - enemy.height;
+    }
+    if (enemy.xPosition + enemy.width > xMax) {
+        enemy.xPosition = xMax - enemy.width;
+    }
+    else if (enemy.xPosition - enemy.width < xMin) {
+        enemy.xPosition = xMin + enemy.width;
+    }
+    if (enemy.zPosition + enemy.width > zMax) {
+        enemy.zPosition = zMax - enemy.width;
+    }
+    else if (enemy.zPosition - enemy.width < zMin) {
+        enemy.zPosition = zMin + enemy.width;
+    }
+    */
 }
 
 /*
@@ -1449,8 +1387,10 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
     if (rock.intersectsEnemy[0] && rock.intersectsEnemy[1] && rock.intersectsEnemy[2] && rock.intersectsEnemy[3] && rock.intersectsEnemy[4] && rock.intersectsEnemy[5]) {
         if (rock.lastIntersectEnemy === 0) {
             enemy.xPosition = rock.xPosition - rock.width - enemy.width;
+            enemy.jump();
         } else if (rock.lastIntersectEnemy === 1) {
             enemy.xPosition = rock.xPosition + rock.width + enemy.width;
+            enemy.jump();
         } else if (rock.lastIntersectEnemy === 2) {
             enemy.verticalVelocity = 0.0;
             enemy.yPosition = rock.yPosition - rock.height - enemy.height;
@@ -1458,8 +1398,10 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
             enemy.verticalVelocity = 0.0;
             enemy.yPosition = rock.yPosition + rock.height + enemy.height;
         } else if (rock.lastIntersectEnemy === 4) {
+            enemy.jump();
             enemy.zPosition = rock.zPosition - rock.width - enemy.width;
         } else if (rock.lastIntersectEnemy === 5) {
+            enemy.jump();
             enemy.zPosition = rock.zPosition + rock.width + enemy.width;
         } else {
             console.log("Failure calculating lastIntersectEnemy: " + rock.lastIntersectEnemy);
@@ -1494,7 +1436,7 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
         }
     }
 
-    if (torchAttack == 1) {
+    if (torchAttack === 1) {
         let distance2 = Math.sqrt((Math.pow(xLight - enemy.xPosition, 2)) + (Math.pow(zLight - enemy.zPosition, 2)) + (Math.pow(yLight - enemy.yPosition, 2))) - enemy.width;
 
         //adjust this factor (should be zero)
