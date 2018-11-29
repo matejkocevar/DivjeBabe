@@ -964,7 +964,7 @@ function start(debug = false) {
 
         // Next, load and set up the textures we'll be using.
         wallTexture = initTextures("./assets/dirtwall.jpg");
-        enemyTexture = initTextures("./assets/evil_face.jpg");
+        enemyTexture = initTextures("./assets/wolf.jpg");
         torchTexture = initTextures("./assets/crate.gif");
         flameTexture = initTextures("./assets/flame.jpg");
 
