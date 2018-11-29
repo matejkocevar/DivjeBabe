@@ -19,6 +19,7 @@ let dead;
 let ouch;
 let growl;
 let howl;
+let hit;
 let swoosh;
 let oogachaka;
 
@@ -135,6 +136,7 @@ function Weapon(deltaX, deltaY, deltaZ) {
     this.dz = deltaZ;
     this.swingPitch = 0;
     this.damage = 50;
+    this.dzSwing = 0;
 }
 
 function Enemy() {
@@ -829,7 +831,7 @@ function animate() {
     mat4.rotate(matrix, degToRad(-pitch), [1, 0, 0]);
     mat4.rotate(matrix, degToRad(-yaw), [0, 1, 0]);
 
-    let vektor = [torchWeapon.dx, torchWeapon.dy, torchWeapon.dz, 1];
+    let vektor = [torchWeapon.dx, torchWeapon.dy, torchWeapon.dz + torchWeapon.dzSwing, 1];
     vektor = matrikaKratVektor(vektor, matrix, vektor);
 
     torchObject.xPosition = xPosition + vektor[0];
@@ -1044,6 +1046,7 @@ window.onresize = setCanvasSize;
 
 function torchSwing(elapsed) {
     torchWeapon.swingPitch -= torchAttack * elapsed * 0.5;
+    torchWeapon.dzSwing -= torchAttack * elapsed * 0.001;
     playSound(swoosh);
 
     // we change the direction of swing
@@ -1054,6 +1057,7 @@ function torchSwing(elapsed) {
     // end of swing
     if (torchAttack === -1 && torchWeapon.swingPitch > 0) {
         torchAttack = 0;
+        torchWeapon.dzSwing = 0;
         torchWeapon.swingPitch = 0;
     }
 }
@@ -1250,7 +1254,7 @@ function handleCollisionDetectionWorldBorder() {
         (zLight - torchObject.width < zMin)) {
 
         torchAttack = -1;
-        //TODO MATEJ: tukaj z baklo udarimo v kamen, naj se predvaja temu primeren zvok
+        playSound(hit);
     }
 }
 
@@ -1352,7 +1356,7 @@ function handleCollisionDetectionObject(rock) {
         (zLight - torchObject.width < rock.zPosition + rock.width)) {
 
         torchAttack = -1;
-        //TODO MATEJ: tukaj z baklo udarimo v kamen, naj se predvaja temu primeren zvok
+        playSound(hit);
     }
 }
 
@@ -1382,13 +1386,14 @@ function handleCollisionDetectionEnemy(rock, changeHealth, elapsedTime) {
     }
 
     if (torchAttack == 1) {
-        let distance2 = Math.sqrt((Math.pow(xLight - enemy.xPosition, 2)) + (Math.pow(zLight - enemy.zPosition, 2)) + (Math.pow(yLight - enemy.yPosition, 2))) - protagonistWidth - enemy.width;
+        let distance2 = Math.sqrt((Math.pow(xLight - enemy.xPosition, 2)) + (Math.pow(zLight - enemy.zPosition, 2)) + (Math.pow(yLight - enemy.yPosition, 2))) - enemy.width;
 
-
-        //adjust this factor
+        //adjust this factor (should be zero)
         if (distance2 < 0.2) {
             console.log("Enemy hit!");
             enemyEnemy.inflictDamage(50);
+
+            //TODO Matej : naj se predvaja zvok ko zadeneš volka
         }
     }
 }
