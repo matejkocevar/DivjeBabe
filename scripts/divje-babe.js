@@ -42,10 +42,11 @@ const pMatrix = mat4.create();
 let wallTexture;
 let enemyTexture;
 let torchTexture;
+let flameTexture;
 
 // Variable that stores  loading state of textures.
 let texturesLoaded = 0;
-let numOfTextures = 3;
+let numOfTextures = 4;
 
 // Keyboard handling helper variable for reading the status of keys
 const currentlyPressedKeys = {};
@@ -519,6 +520,8 @@ function initShaders() {
     shaderProgram.pointLightingLocationUniform = gl.getUniformLocation(shaderProgram, "uPointLightingLocation");
     // store location of uDirectionalColor variable defined in shader
     shaderProgram.pointLightingColorUniform = gl.getUniformLocation(shaderProgram, "uPointLightingColor");
+    // emissive color for some material (torch)
+    shaderProgram.materialEmissiveColorUniform = gl.getUniformLocation(shaderProgram, "uMaterialEmissiveColor");
 }
 
 //
@@ -676,6 +679,8 @@ function drawScene() {
     gl.uniform3f(shaderProgram.pointLightingColorUniform, 1.0, 0.7, 0.3);
     gl.uniform1i(shaderProgram.useTexturesUniform, useTextures);
 
+    gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 0.0, 0.0, 0.0);
+
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
     mat4.identity(mvMatrix);
@@ -719,8 +724,10 @@ function drawScene() {
 
     enemy.draw();
 
+    gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 0.2, 0.2, 0.2);
     torchObject.draw();
 
+    gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 1.0, 1.0, 1.0);
     lightObject.draw();
 }
 
@@ -733,8 +740,8 @@ function drawScene() {
 function initObjects() {
 
     enemy = new Object2(1 / 8, 1 / 8, 1 / 8, 2, 2, enemyTexture, 8);
-    torchObject = new Object2(1 / 128, 1 / 6, 1 / 128, 1, 1, torchTexture);
-    lightObject = new Object2(1 / 256, 1 / 256, 1 / 256, 2, 2, enemyTexture);
+    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, 1, wallTexture, 1);
+    lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, 2, flameTexture, 96);
 
     let numObjects = 6;
     for (let i = 0; i < numObjects; i++) {
@@ -744,7 +751,7 @@ function initObjects() {
     objects[0].loadObject();
     objects[numObjects - 1].yaw = 90;
 
-    torchWeapon = new Weapon(0.07, -0.15, -0.16);
+    torchWeapon = new Weapon(0.08, -0.2, -0.18);
     enemyEnemy = new Enemy();
 }
 
@@ -825,7 +832,7 @@ function animate() {
 
     // rotacija polozaja centra bakle
     torchObject.yaw = yaw;
-    torchObject.pitch = pitch + torchWeapon.swingPitch;
+    torchObject.pitch = 5 + pitch + torchWeapon.swingPitch; // 5 is base bitch
 
     let matrix = [];
     mat4.identity(matrix);
@@ -1018,6 +1025,7 @@ function start(debug = false) {
         wallTexture = initTextures("./assets/wall_cave.jpg");
         enemyTexture = initTextures("./assets/evil_face.jpg");
         torchTexture = initTextures("./assets/crate.gif");
+        flameTexture = initTextures("./assets/flame.jpg");
 
         // Initialise world objects
         loadWorld();
@@ -1050,7 +1058,7 @@ window.onresize = setCanvasSize;
 
 function torchSwing(elapsed) {
     torchWeapon.swingPitch -= torchAttack * elapsed * 0.5;
-    torchWeapon.dzSwing -= torchAttack * elapsed * 0.001;
+    torchWeapon.dzSwing -= torchAttack * elapsed * 0.002;
     playSound(swoosh);
 
     // we change the direction of swing

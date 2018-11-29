@@ -23,6 +23,7 @@
 
         uniform vec3 uPointLightingLocation;	// light direction uniform
         uniform vec3 uPointLightingColor;		// light color
+        uniform vec3 uMaterialEmissiveColor;	// emissive material color uniform
 
         // uniform attribute for setting 2D sampler
         uniform sampler2D uSampler;
@@ -30,6 +31,8 @@
 
         void main(void) {
             vec3 lightWeighting;
+            vec3 materialEmissiveColor = vec3(0.0, 0.0, 0.0);
+
             if (!uUseLighting) {
                 lightWeighting = vec3(1.0, 1.0, 1.0);
             } else {
@@ -47,15 +50,19 @@
 
                 // calculate lighting
                 lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;
+
+                materialEmissiveColor = uMaterialEmissiveColor;
             }
 
             vec4 fragmentColor;
             if (uUseTextures) {
                 fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+
+                materialEmissiveColor = materialEmissiveColor * fragmentColor.rgb;
             } else {
                 fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
             }
-            gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+            gl_FragColor = vec4(fragmentColor.rgb * lightWeighting + materialEmissiveColor, fragmentColor.a);
         }
 
     </script>
