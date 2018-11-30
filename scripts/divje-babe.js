@@ -853,12 +853,12 @@ function animate() {
         torchObject.yPosition = yPosition + vektor[1];
         torchObject.zPosition = zPosition + vektor[2];
     } else {
-        torchObject.pitch = 30;
-        torchObject.yaw = 0;
+        torchObject.pitch = -20;
+        torchObject.yaw = -45;
 
-        torchObject.xPosition = 2;
+        torchObject.xPosition = 2.02;
         torchObject.yPosition = yMin + 0.5;
-        torchObject.zPosition = zMin + 0.05;
+        torchObject.zPosition = zMin + 0.98;
     }
 
     let vektor = [0, torchObject.height + torchObject.widthX, 0, 1];
