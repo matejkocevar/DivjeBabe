@@ -18,6 +18,7 @@ let numberOfHitsEnemy;
 let numberOfHitsWall;
 let numberOfEliminations;
 
+
 let torchPicked = false;
 
 // HTMLCollections containing HTML audio
@@ -124,7 +125,9 @@ let lightObject2;
 let worldObject;
 
 //enemies
-let enemy; // "good" variable name
+let enemy;
+let enemies = [2, floor1, 2, -4.5, floor1, 3.5];
+let enemyIndex;
 
 //light
 let xLight;
@@ -164,7 +167,7 @@ Enemy.prototype.inflictDamage = function (damage) {
         this.alive = false;
         console.log("enemy ded");
         numberOfEliminations += 1;
-        respawnEnemy(2, floor1, 2);
+        respawnEnemy();
     }
 };
 
@@ -432,9 +435,6 @@ function initGL() {
 function initGame() {
     protagonist = true;
     protagonistHeight = 0.4;
-    xPosition = -4.5;
-    protagonistYPosition = floor1 + 2;
-    zPosition = -4.5;
     moveForward = 0;
     pitch = 0;
     pitchRate = 0;
@@ -450,8 +450,21 @@ function initGame() {
     paused = false;
     torchPicked = false;
 
+
+    xPosition = -4.5;
+    protagonistYPosition = floor1 + 2;
+    zPosition = -4.5;
+
+    //for testing only
+    xPosition = -4.5;
+    protagonistYPosition = floor1 + 0.1;
+    zPosition = 4.5;
+    //playSound(oogachaka[2]);
+
     updateHealth(maxBodyStatus);
     showStats(false);
+
+    enemyIndex = 0;
 }
 
 
@@ -694,7 +707,7 @@ function initObjects() {
     lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, floor1 + 1, 2, flameTexture, 96);
 
     //strop
-    objects.push(new Object2(4, 0.5, 5, 1, floor1 + 2, 0, wallTexture, 5));
+    objects.push(new Object2(4, 0.25, 5, 1, floor1 + 2, 0, wallTexture, 5));
 
     //tla
     //objects.push(new Object2(5, 1, 5, 0, floor1 - 2, 0, wallTexture, 1));
@@ -702,21 +715,26 @@ function initObjects() {
     objects.push(new Object2(5, 1, 1, 0, floor1 - 2, -4, wallTexture, 0.5));
     objects.push(new Object2(3, 1, 0.5, -1, floor1 - 2, -2.5, wallTexture, 5));
     objects.push(new Object2(1, 1, 0.5, 4, floor1 - 2, -2.5, wallTexture, 1));
-
     objects.push(new Object2(5, 1, 3.5, 0, floor1 - 2, 1.5, wallTexture, 1));
-
 
     //zid
     objects.push(new Object2(4, 1, 0.5, -2, floor1, -3.5, wallTexture, 0.5));
     objects.push(new Object2(1, 1, 2, 4, floor1, -3, wallTexture, 1));
     objects.push(new Object2(1, 1, 1, 1, floor1, -2, wallTexture, 1));
 
+    //stairs
+    objects.push(new Object2(1, 0.5, 1, -4, floor1, 2, wallTexture, 1));
+    objects.push(new Object2(0.25, 0.25, 0.5, -3.5, floor1, 3.5, wallTexture, 1));
+    objects.push(new Object2(0.5, 0.25, 0.25, -4.25, floor1, 3, wallTexture, 1));
+
+    objects.push(new Object2(0.25, 1, 1.25, -4.75, floor1, -0.25, wallTexture, 2));
+    objects.push(new Object2(0.25, 0.25, 0.25, -4.75, floor1 + 1, 1.25, wallTexture, 2));
+
     enemy = new Enemy(2, floor1, 2);
 
     objects[0].loadObject("./assets/cube.txt");
 
     torchWeapon = new Weapon(0.08, -0.2, -0.18); //-0.18 is stable
-
 
     // the second torch
     torchObject2.pitch = -30;
@@ -891,7 +909,6 @@ function handleKeyUp(event) {
 
     if (event.keyCode === 82) { // R
         initGame();
-        playSound(oogachaka[0]);
     }
 
     if (event.keyCode === 84) // T
@@ -1040,7 +1057,7 @@ function start(debug = false) {
         // Next, load and set up the textures we'll be using.
         wallTexture = initTextures("./assets/dirtwall.jpg");
         enemyTexture = initTextures("./assets/wolf.jpg");
-        torchTexture = initTextures("./assets/crate.gif");
+        torchTexture = initTextures("./assets/dirtwall.jpg");
         flameTexture = initTextures("./assets/flame.jpg");
 
         // Initialise world objects
@@ -1580,12 +1597,23 @@ function intro(show = true) {
         intro.display = "none";
         paused = false;
         initGame();
-        playSound(oogachaka[2]);
     }
 }
 
-function respawnEnemy(x, y, z) {
-    enemy = new Enemy(x, y, z);
+function respawnEnemy() {
+    enemyIndex++;
+
+    objects.push(enemy.object);
+
+    if (enemyIndex < enemies.length / 3) {
+        //enemy = enemies[enemyIndex];
+        enemy = new Enemy(enemies[enemyIndex * 3], enemies[enemyIndex * 3 + 1], enemies[enemyIndex * 3 + 2]);
+        console.log(enemies[enemyIndex * 3] + " " + enemies[enemyIndex * 3 + 1] + " " + enemies[enemyIndex * 3 + 2]);
+    }
+
+
+
+
     enemy.object.handleLoadedObject(1);
 }
 
