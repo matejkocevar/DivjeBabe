@@ -22,6 +22,8 @@
         uniform vec3 uAmbientColor;	// ambient color uniform
 
         uniform vec3 uPointLightingLocation;	// light direction uniform
+        uniform vec3 uPointLightingLocation2;	// light direction uniform
+
         uniform vec3 uPointLightingColor;		// light color
         uniform vec3 uMaterialEmissiveColor;	// emissive material color uniform
 
@@ -38,18 +40,26 @@
             } else {
                 // transform normals
                 vec3 lightVector = uPointLightingLocation - vPosition.xyz;
+                vec3 lightVector2 = uPointLightingLocation2 - vPosition.xyz;
                 vec3 lightDirection = normalize(lightVector);
+                vec3 lightDirection2 = normalize(lightVector2);
 
                 // calculate weight for directional light
                 float directionalLightWeighting = max(dot(normalize(vTransformedNormal), lightDirection), 0.0);
+                float directionalLightWeighting2 = max(dot(normalize(vTransformedNormal), lightDirection2), 0.0);
 
                 // calculate the distance to the light
                 float distance = sqrt(lightVector.x*lightVector.x + lightVector.y*lightVector.y + lightVector.z*lightVector.z);
                 float distanceWeight = min(1.0, 1.0/distance);
                 directionalLightWeighting = directionalLightWeighting * sqrt(distanceWeight * distanceWeight * distanceWeight);
 
+
+                float distance2 = sqrt(lightVector2.x*lightVector2.x + lightVector2.y*lightVector2.y + lightVector2.z*lightVector2.z);
+                float distanceWeight2 = min(1.0, 1.0/distance2);
+                directionalLightWeighting2 = directionalLightWeighting2 * sqrt(distanceWeight2 * distanceWeight2 * distanceWeight2);
+
                 // calculate lighting
-                lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;
+                lightWeighting = uAmbientColor + uPointLightingColor * (directionalLightWeighting + directionalLightWeighting2);
 
                 materialEmissiveColor = uMaterialEmissiveColor;
             }

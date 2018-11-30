@@ -116,8 +116,10 @@ let paused = false;
 // world objects
 let objects = [];
 let torchObject;
+let torchObject2;
 let torchWeapon;
 let lightObject;
+let lightObject2;
 let worldObject;
 
 //enemies
@@ -127,6 +129,11 @@ let enemy; // "good" variable name
 let xLight;
 let yLight;
 let zLight;
+
+let xLight2;
+let yLight2;
+let zLight2;
+
 
 // attacking
 
@@ -303,7 +310,9 @@ function handleLoadedObjectData(data) {
     }
     enemy.object.handleLoadedObject(1);
     torchObject.handleLoadedObject(1);
+    torchObject2.handleLoadedObject(1);
     lightObject.handleLoadedObject(1);
+    lightObject2.handleLoadedObject(1);
 
 
     document.getElementById("loadingtext").textContent = "";
@@ -324,14 +333,25 @@ Object2.prototype.draw = function () {
 
     // <FIX> (vertex shader isn't working properly)
     let matrix = [];
+    let vektor;
     mat4.identity(matrix);
     mat4.rotate(matrix, degToRad(this.yaw), [0, 1, 0]);
     mat4.rotate(matrix, degToRad(this.pitch), [1, 0, 0]);
 
-    let vektor = [xLight - this.xPosition, yLight - this.yPosition, zLight - this.zPosition, 1];
+    vektor = [xLight - this.xPosition, yLight - this.yPosition, zLight - this.zPosition, 1];
     vektor = matrikaKratVektor(vektor, matrix, vektor);
 
     gl.uniform3f(shaderProgram.pointLightingLocationUniform, vektor[0], vektor[1], vektor[2]);
+
+
+    mat4.identity(matrix);
+    mat4.rotate(matrix, degToRad(this.yaw), [0, 1, 0]);
+    mat4.rotate(matrix, degToRad(this.pitch), [1, 0, 0]);
+
+    vektor = [xLight2 - this.xPosition, yLight2 - this.yPosition, zLight2 - this.zPosition, 1];
+    vektor = matrikaKratVektor(vektor, matrix, vektor);
+
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform2, vektor[0], vektor[1], vektor[2]);
     // </FIX>
 
     // Activate textures
@@ -545,6 +565,7 @@ function initShaders() {
     shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
     // store location of uLightingDirection variable defined in shader
     shaderProgram.pointLightingLocationUniform = gl.getUniformLocation(shaderProgram, "uPointLightingLocation");
+    shaderProgram.pointLightingLocationUniform2 = gl.getUniformLocation(shaderProgram, "uPointLightingLocation2");
     // store location of uDirectionalColor variable defined in shader
     shaderProgram.pointLightingColorUniform = gl.getUniformLocation(shaderProgram, "uPointLightingColor");
     // emissive color for some material (torch)
@@ -633,6 +654,7 @@ function drawScene() {
     gl.uniform1i(shaderProgram.useLightingUniform, true);
     gl.uniform3f(shaderProgram.ambientColorUniform, 0.1, 0.07, 0.03);
     gl.uniform3f(shaderProgram.pointLightingLocationUniform, xLight, yLight, zLight);
+    gl.uniform3f(shaderProgram.pointLightingLocationUniform2, xLight2, yLight2, zLight2);
     gl.uniform3f(shaderProgram.pointLightingColorUniform, 1.0, 0.7, 0.3);
     gl.uniform1i(shaderProgram.useTexturesUniform, useTextures);
 
@@ -653,9 +675,11 @@ function drawScene() {
 
     gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 0.2, 0.2, 0.2);
     torchObject.draw();
+    torchObject2.draw();
 
     gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 1.0, 1.0, 1.0);
     lightObject.draw();
+    lightObject2.draw();
 }
 
 //
@@ -668,7 +692,10 @@ function initObjects() {
 
     worldObject = new Object2(worldSize, worldSize, worldSize, 0, -worldSize, 0, wallTexture, 2);
     torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 5);
+    torchObject2 = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 5);
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
+    lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin + 1, 2, flameTexture, 96);
+
 
     /*
     let numObjects = 6;
@@ -700,6 +727,34 @@ function initObjects() {
     objects[0].loadObject("./assets/cube.txt");
 
     torchWeapon = new Weapon(0.08, -0.2, -0.18); //-0.18 is stable
+
+
+    // the second torch
+    torchObject2.pitch = -30;
+    torchObject2.yaw = 0;
+
+    torchObject2.xPosition = -4;
+    torchObject2.yPosition = yMin + 0.5;
+    torchObject2.zPosition = zMax - 0.05;
+
+    let vektor = [0, torchObject2.height + torchObject2.widthX, 0, 1];
+    let matrix = [];
+
+    mat4.identity(matrix);
+    mat4.rotate(matrix, degToRad(-torchObject2.pitch), [1, 0, 0]);
+    mat4.rotate(matrix, degToRad(-torchObject2.yaw), [0, 1, 0]);
+    vektor = matrikaKratVektor(vektor, matrix, vektor);
+
+    xLight2 = torchObject2.xPosition + vektor[0];
+    yLight2 = torchObject2.yPosition + vektor[1];
+    zLight2 = torchObject2.zPosition + vektor[2];
+
+    lightObject2.xPosition = xLight2;
+    lightObject2.yPosition = yLight2;
+    lightObject2.zPosition = zLight2;
+
+    lightObject2.yaw = torchObject2.yaw;
+    lightObject2.pitch = torchObject2.pitch;
 }
 
 function animate() {
