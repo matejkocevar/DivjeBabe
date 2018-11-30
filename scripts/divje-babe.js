@@ -171,7 +171,8 @@ function Object2(scaleX, scaleY, scaleZ, xPosition, yPosition, zPosition, textur
     this.scaleY = scaleY;
     this.scaleZ = scaleZ;
     this.textureScale = textureScale;
-    this.width = scaleX;
+    this.widthX = scaleX;
+    this.widthZ = scaleZ;
     this.height = scaleY;
     this.texture = texture;
     this.yaw = 0;
@@ -414,9 +415,9 @@ function initGL() {
 function initGame() {
     protagonist = true;
     protagonistHeight = 0.4;
-    xPosition = -4;
+    xPosition = -4.5;
     yPosition = protagonistHeight;
-    zPosition = -4;
+    zPosition = -4.5;
     moveForward = 0;
     pitch = 0;
     pitchRate = 0;
@@ -671,10 +672,11 @@ function initObjects() {
     let numObjects = 6;
     for (let i = 0; i < numObjects; i++) {
         // Create new object and push it to the objects array...
-        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, yMin, -3, wallTexture, 2));
+        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, yMin, -2, wallTexture, 2));
     }
 
     objects.push(new Object2(5, 1, 5, 0, 1, 0, wallTexture, 1));
+    objects.push(new Object2(3, 1, 1 / 4, -2, yMin, -3.75, wallTexture, 1));
 
     enemy = new Enemy(2, yMin, 2);
 
@@ -788,7 +790,7 @@ function animate() {
         torchObject.zPosition = -4.95;
     }
 
-    let vektor = [0, torchObject.height + torchObject.width, 0, 1];
+    let vektor = [0, torchObject.height + torchObject.widthX, 0, 1];
     let matrix = [];
 
     mat4.identity(matrix);
@@ -1008,12 +1010,13 @@ window.onresize = setCanvasSize;
 function torchSwing(elapsed) {
     torchWeapon.swingPitch -= torchAttack * elapsed * 0.5;
     torchWeapon.dzSwing -= torchAttack * elapsed * 0.002;
-    numberOfSwings += 1;
-    playSound(swoosh);
 
     // we change the direction of swing
     if (torchWeapon.swingPitch < -90) {
         torchAttack = -1;
+
+        numberOfSwings += 1;
+        playSound(swoosh);
     }
 
     // end of swing
@@ -1216,12 +1219,12 @@ function handleCollisionDetectionWorldBorderProt() {
         zPosition = zMin + protagonistWidth;
     }
 
-    if ((xLight + torchObject.width > xMax) ||
-        (xLight - torchObject.width < xMin) ||
-        (yLight + torchObject.width > yMax) ||
-        (yLight - torchObject.width < yMin) ||
-        (zLight + torchObject.width > zMax) ||
-        (zLight - torchObject.width < zMin)) {
+    if ((xLight + torchObject.widthX > xMax) ||
+        (xLight - torchObject.widthX < xMin) ||
+        (yLight + torchObject.widthX > yMax) ||
+        (yLight - torchObject.widthX < yMin) ||
+        (zLight + torchObject.widthZ > zMax) ||
+        (zLight - torchObject.widthZ < zMin)) {
 
         if (torchAttack === 1) {
             torchAttack = -1;
@@ -1242,17 +1245,17 @@ function handleCollisionDetectionWorldBorderEnemy(enemy) {
         verticalVelocity = 0.0;
         enemy.yPosition = yMax - enemy.height;
     }
-    if (enemy.xPosition + enemy.width > xMax) {
-        enemy.xPosition = xMax - enemy.width;
+    if (enemy.xPosition + enemy.widthX > xMax) {
+        enemy.xPosition = xMax - enemy.widthX;
     }
-    else if (enemy.xPosition - enemy.width < xMin) {
-        enemy.xPosition = xMin + enemy.width;
+    else if (enemy.xPosition - enemy.widthX < xMin) {
+        enemy.xPosition = xMin + enemy.widthX;
     }
-    if (enemy.zPosition + enemy.width > zMax) {
-        enemy.zPosition = zMax - enemy.width;
+    if (enemy.zPosition + enemy.widthZ > zMax) {
+        enemy.zPosition = zMax - enemy.widthZ;
     }
-    else if (enemy.zPosition - enemy.width < zMin) {
-        enemy.zPosition = zMin + enemy.width;
+    else if (enemy.zPosition - enemy.widthZ < zMin) {
+        enemy.zPosition = zMin + enemy.widthZ;
     }
     */
 }
@@ -1270,7 +1273,7 @@ lastIntersectEnemy: remembers which intersect did we detect the last, so that th
  */
 function handleCollisionDetectionObjectProt(rock) {
 
-    if (xPosition + protagonistWidth > rock.xPosition - rock.width) {
+    if (xPosition + protagonistWidth > rock.xPosition - rock.widthX) {
         if (!rock.intersectsProt[0]) {
             rock.lastIntersectProt = 0;
             rock.intersectsProt[0] = true;
@@ -1278,7 +1281,7 @@ function handleCollisionDetectionObjectProt(rock) {
     } else {
         rock.intersectsProt[0] = false;
     }
-    if (xPosition - protagonistWidth < rock.xPosition + rock.width) {
+    if (xPosition - protagonistWidth < rock.xPosition + rock.widthX) {
         if (!rock.intersectsProt[1]) {
             rock.lastIntersectProt = 1;
             rock.intersectsProt[1] = true;
@@ -1305,7 +1308,7 @@ function handleCollisionDetectionObjectProt(rock) {
         rock.intersectsProt[3] = false;
     }
 
-    if (zPosition + protagonistWidth > rock.zPosition - rock.width) {
+    if (zPosition + protagonistWidth > rock.zPosition - rock.widthZ) {
         if (!rock.intersectsProt[4]) {
             rock.lastIntersectProt = 4;
             rock.intersectsProt[4] = true;
@@ -1314,7 +1317,7 @@ function handleCollisionDetectionObjectProt(rock) {
         rock.intersectsProt[4] = false;
     }
 
-    if (zPosition - protagonistWidth < rock.zPosition + rock.width) {
+    if (zPosition - protagonistWidth < rock.zPosition + rock.widthZ) {
         if (!rock.intersectsProt[5]) {
             rock.lastIntersectProt = 5;
             rock.intersectsProt[5] = true;
@@ -1327,9 +1330,9 @@ function handleCollisionDetectionObjectProt(rock) {
 
     if (rock.intersectsProt[0] && rock.intersectsProt[1] && rock.intersectsProt[2] && rock.intersectsProt[3] && rock.intersectsProt[4] && rock.intersectsProt[5]) {
         if (rock.lastIntersectProt === 0) {
-            xPosition = rock.xPosition - rock.width - protagonistWidth;
+            xPosition = rock.xPosition - rock.widthX - protagonistWidth;
         } else if (rock.lastIntersectProt === 1) {
-            xPosition = rock.xPosition + rock.width + protagonistWidth;
+            xPosition = rock.xPosition + rock.widthX + protagonistWidth;
         } else if (rock.lastIntersectProt === 2) {
             verticalVelocity = 0.0;
             protagonistYPosition = rock.yPosition - rock.height - protagonistHeight;
@@ -1337,9 +1340,9 @@ function handleCollisionDetectionObjectProt(rock) {
             verticalVelocity = 0.0;
             protagonistYPosition = rock.yPosition + rock.height;
         } else if (rock.lastIntersectProt === 4) {
-            zPosition = rock.zPosition - rock.width - protagonistWidth;
+            zPosition = rock.zPosition - rock.widthZ - protagonistWidth;
         } else if (rock.lastIntersectProt === 5) {
-            zPosition = rock.zPosition + rock.width + protagonistWidth;
+            zPosition = rock.zPosition + rock.widthZ + protagonistWidth;
         } else {
             console.log("Failure calculating lastIntersectProt: " + rock.lastIntersectProt);
         }
@@ -1347,12 +1350,12 @@ function handleCollisionDetectionObjectProt(rock) {
 
     //for the torch
 
-    if ((xLight + torchObject.width > rock.xPosition - rock.width) &&
-        (xLight - torchObject.width < rock.xPosition + rock.width) &&
-        (yLight + torchObject.width > rock.yPosition - rock.height) &&
-        (yLight - torchObject.width < rock.yPosition + rock.height) &&
-        (zLight + torchObject.width > rock.zPosition - rock.width) &&
-        (zLight - torchObject.width < rock.zPosition + rock.width)) {
+    if ((xLight + torchObject.widthX > rock.xPosition - rock.widthX) &&
+        (xLight - torchObject.widthX < rock.xPosition + rock.widthX) &&
+        (yLight + torchObject.widthX > rock.yPosition - rock.height) &&
+        (yLight - torchObject.widthX < rock.yPosition + rock.height) &&
+        (zLight + torchObject.widthZ > rock.zPosition - rock.widthZ) &&
+        (zLight - torchObject.widthZ < rock.zPosition + rock.widthZ)) {
 
         if (torchAttack === 1) {
             torchAttack = -1;
@@ -1365,7 +1368,7 @@ function handleCollisionDetectionObjectProt(rock) {
 
 function handleCollisionDetectionObjectEnemy(rock, enemy) {
 
-    if (enemy.xPosition + enemy.width > rock.xPosition - rock.width) {
+    if (enemy.xPosition + enemy.widthX > rock.xPosition - rock.widthX) {
         if (!rock.intersectsEnemy[0]) {
             rock.lastIntersectEnemy = 0;
             rock.intersectsEnemy[0] = true;
@@ -1373,7 +1376,7 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
     } else {
         rock.intersectsEnemy[0] = false;
     }
-    if (enemy.xPosition - enemy.width < rock.xPosition + rock.width) {
+    if (enemy.xPosition - enemy.widthX < rock.xPosition + rock.widthX) {
         if (!rock.intersectsEnemy[1]) {
             rock.lastIntersectEnemy = 1;
             rock.intersectsEnemy[1] = true;
@@ -1400,7 +1403,7 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
         rock.intersectsEnemy[3] = false;
     }
 
-    if (enemy.zPosition + enemy.width > rock.zPosition - rock.width) {
+    if (enemy.zPosition + enemy.widthZ > rock.zPosition - rock.widthZ) {
         if (!rock.intersectsEnemy[4]) {
             rock.lastIntersectEnemy = 4;
             rock.intersectsEnemy[4] = true;
@@ -1409,7 +1412,7 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
         rock.intersectsEnemy[4] = false;
     }
 
-    if (enemy.zPosition - enemy.width < rock.zPosition + rock.width) {
+    if (enemy.zPosition - enemy.widthZ < rock.zPosition + rock.widthZ) {
         if (!rock.intersectsEnemy[5]) {
             rock.lastIntersectEnemy = 5;
             rock.intersectsEnemy[5] = true;
@@ -1422,10 +1425,10 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
 
     if (rock.intersectsEnemy[0] && rock.intersectsEnemy[1] && rock.intersectsEnemy[2] && rock.intersectsEnemy[3] && rock.intersectsEnemy[4] && rock.intersectsEnemy[5]) {
         if (rock.lastIntersectEnemy === 0) {
-            enemy.xPosition = rock.xPosition - rock.width - enemy.width;
+            enemy.xPosition = rock.xPosition - rock.widthX - enemy.widthX;
             enemy.jump();
         } else if (rock.lastIntersectEnemy === 1) {
-            enemy.xPosition = rock.xPosition + rock.width + enemy.width;
+            enemy.xPosition = rock.xPosition + rock.widthX + enemy.widthX;
             enemy.jump();
         } else if (rock.lastIntersectEnemy === 2) {
             enemy.verticalVelocity = 0.0;
@@ -1435,10 +1438,10 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
             enemy.yPosition = rock.yPosition + rock.height + enemy.height;
         } else if (rock.lastIntersectEnemy === 4) {
             enemy.jump();
-            enemy.zPosition = rock.zPosition - rock.width - enemy.width;
+            enemy.zPosition = rock.zPosition - rock.widthZ - enemy.widthZ;
         } else if (rock.lastIntersectEnemy === 5) {
             enemy.jump();
-            enemy.zPosition = rock.zPosition + rock.width + enemy.width;
+            enemy.zPosition = rock.zPosition + rock.widthZ + enemy.widthZ;
         } else {
             console.log("Failure calculating lastIntersectEnemy: " + rock.lastIntersectEnemy);
         }
@@ -1447,14 +1450,14 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
 
 function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
 
-    let distance = Math.sqrt((Math.pow(xPosition - enemy.object.xPosition, 2)) + (Math.pow(zPosition - enemy.object.zPosition, 2))) - protagonistWidth - enemy.object.width;
+    let distance = Math.sqrt((Math.pow(xPosition - enemy.object.xPosition, 2)) + (Math.pow(zPosition - enemy.object.zPosition, 2))) - protagonistWidth - enemy.object.widthZ;
 
-    if ((xPosition + protagonistWidth > enemy.object.xPosition - enemy.object.width) &&
-        (xPosition - protagonistWidth < enemy.object.xPosition + enemy.object.width) &&
+    if ((xPosition + protagonistWidth > enemy.object.xPosition - enemy.object.widthX) &&
+        (xPosition - protagonistWidth < enemy.object.xPosition + enemy.object.widthX) &&
         (protagonistYPosition + protagonistHeight > enemy.object.yPosition - enemy.object.height) &&
         (protagonistYPosition < enemy.object.yPosition + enemy.object.height) &&
-        (zPosition + protagonistWidth > enemy.object.zPosition - enemy.object.width) &&
-        (zPosition - protagonistWidth < enemy.object.zPosition + enemy.object.width)) {
+        (zPosition + protagonistWidth > enemy.object.zPosition - enemy.object.widthZ) &&
+        (zPosition - protagonistWidth < enemy.object.zPosition + enemy.object.widthZ)) {
         zPosition -= elapsed * 0.02;
         moveForward = -0.2;
         setTimeout(function () {
@@ -1475,7 +1478,7 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
     }
 
     if (torchAttack === 1) {
-        let distance2 = Math.sqrt((Math.pow(xLight - enemy.object.xPosition, 2)) + (Math.pow(zLight - enemy.object.zPosition, 2)) + (Math.pow(yLight - enemy.object.yPosition, 2))) - enemy.object.width;
+        let distance2 = Math.sqrt((Math.pow(xLight - enemy.object.xPosition, 2)) + (Math.pow(zLight - enemy.object.zPosition, 2)) + (Math.pow(yLight - enemy.object.yPosition, 2))) - enemy.object.widthZ;
 
         //adjust this factor (should be zero)
         if (distance2 < 0.2) {
