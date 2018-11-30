@@ -1,5 +1,7 @@
 # DivjeBabe
 
+Igro poženemo preko index.html.
+
 3D igra pri predmetu Računalništvo in tehnologija iger, ki izpolnjuje naslednje zahteve:
 - [x] osebki, ki živijo (umirajo) in se gibajo v 3D prostoru
 - [x] prostor mora vsebovati elemente oz. ovire (stene, pregrade...), ki so osebkom v napoto
