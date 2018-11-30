@@ -696,14 +696,6 @@ function initObjects() {
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
     lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin + 1, 2, flameTexture, 96);
 
-
-    /*
-    let numObjects = 6;
-    for (let i = 0; i < numObjects; i++) {
-        // Create new object and push it to the objects array...
-        objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, yMin, -2, wallTexture, 2));
-    }
-    */
     //strop
     objects.push(new Object2(5, 1, 5, 0, yMin + 2, 0, wallTexture, 1));
 
@@ -720,7 +712,7 @@ function initObjects() {
     //zid
     objects.push(new Object2(4, 1, 0.5, -2, yMin, -3.5, wallTexture, 1));
     objects.push(new Object2(1, 1, 2, 4, yMin, -3, wallTexture, 1));
-    objects.push(new Object2(0.5, 1, 1, 1.5, yMin, -2, wallTexture, 1));
+    objects.push(new Object2(1, 1, 1, 1, yMin, -2, wallTexture, 1));
 
     enemy = new Enemy(2, yMin, 2);
 
@@ -920,8 +912,13 @@ function handleKeyUp(event) {
 
     if (event.keyCode === 70) {
         // F is pressed
-        torchPicked = !torchPicked;
-        console.log("You picked up the torch!");
+
+        let distance = Math.sqrt(Math.pow((xPosition - 2.02), 2) + Math.pow((yPosition - (yMin + 0.5)), 2) + Math.pow((zPosition - (zMin + 0.98)), 2));
+
+        if (distance < 0.7) {
+            torchPicked = !torchPicked;
+            console.log("You picked up/put down the torch!");
+        }
     }
 }
 
