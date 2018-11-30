@@ -97,6 +97,7 @@ const zMin = -worldSize;
 const xMax = worldSize;
 const zMax = worldSize;
 const floor1 = 0.0;
+const floor2 = 3.0;
 const yMax = worldSize;
 const yMin = -worldSize;
 
@@ -126,7 +127,7 @@ let worldObject;
 
 //enemies
 let enemy;
-let enemies = [2, floor1, 2, -4.5, floor1, 3.5];
+let enemies = [2, floor1, 2, -4.5, floor1, 3.5, 0.0, floor2, 0.0];
 let enemyIndex;
 
 //light
@@ -707,7 +708,7 @@ function initObjects() {
     lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, floor1 + 1, 2, flameTexture, 96);
 
     //strop
-    objects.push(new Object2(4, 0.25, 5, 1, floor1 + 2, 0, wallTexture, 5));
+    objects.push(new Object2(4, 0.5, 5, 1, floor1 + 2, 0, wallTexture, 5));
 
     //tla
     //objects.push(new Object2(5, 1, 5, 0, floor1 - 2, 0, wallTexture, 1));
