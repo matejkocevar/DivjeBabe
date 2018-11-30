@@ -433,7 +433,7 @@ function initGame() {
     protagonist = true;
     protagonistHeight = 0.4;
     xPosition = -4.5;
-    yPosition = protagonistHeight;
+    protagonistYPosition = floor1 + 2;
     zPosition = -4.5;
     moveForward = 0;
     pitch = 0;
@@ -447,8 +447,8 @@ function initGame() {
     numberOfHitsEnemy = 0;
     numberOfHitsWall = 0;
     numberOfEliminations = 0;
-    protagonistYPosition = 0.0;
     paused = false;
+    torchPicked = false;
 
     updateHealth(maxBodyStatus);
     showStats(false);
@@ -694,20 +694,20 @@ function initObjects() {
     lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, floor1 + 1, 2, flameTexture, 96);
 
     //strop
-    objects.push(new Object2(4, 0.5, 5, 1, floor1 + 2, 0, wallTexture, 1));
+    objects.push(new Object2(4, 0.5, 5, 1, floor1 + 2, 0, wallTexture, 5));
 
     //tla
     //objects.push(new Object2(5, 1, 5, 0, floor1 - 2, 0, wallTexture, 1));
 
-    objects.push(new Object2(5, 1, 1, 0, floor1 - 2, -4, wallTexture, 1));
-    objects.push(new Object2(3, 1, 0.5, -1, floor1 - 2, -2.5, wallTexture, 1));
+    objects.push(new Object2(5, 1, 1, 0, floor1 - 2, -4, wallTexture, 0.5));
+    objects.push(new Object2(3, 1, 0.5, -1, floor1 - 2, -2.5, wallTexture, 5));
     objects.push(new Object2(1, 1, 0.5, 4, floor1 - 2, -2.5, wallTexture, 1));
 
     objects.push(new Object2(5, 1, 3.5, 0, floor1 - 2, 1.5, wallTexture, 1));
 
 
     //zid
-    objects.push(new Object2(4, 1, 0.5, -2, floor1, -3.5, wallTexture, 1));
+    objects.push(new Object2(4, 1, 0.5, -2, floor1, -3.5, wallTexture, 0.5));
     objects.push(new Object2(1, 1, 2, 4, floor1, -3, wallTexture, 1));
     objects.push(new Object2(1, 1, 1, 1, floor1, -2, wallTexture, 1));
 
@@ -1579,9 +1579,9 @@ function intro(show = true) {
     else {
         intro.display = "none";
         paused = false;
+        initGame();
         playSound(oogachaka[2]);
     }
-
 }
 
 function respawnEnemy(x, y, z) {
