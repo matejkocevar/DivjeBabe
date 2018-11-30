@@ -101,7 +101,7 @@ const yMin = -worldSize;
 
 
 // on what Y position are protagonist's feet
-let protagonistYPosition = 0.0;
+let protagonistYPosition;
 yPosition = protagonistYPosition + protagonistHeight;
 
 // Used to make us "jog" up and down as we move forward.
@@ -447,6 +447,7 @@ function initGame() {
     numberOfHitsEnemy = 0;
     numberOfHitsWall = 0;
     numberOfEliminations = 0;
+    protagonistYPosition = 0.0;
     paused = false;
 
     updateHealth(maxBodyStatus);
@@ -1577,7 +1578,8 @@ function intro(show = true) {
     }
     else {
         intro.display = "none";
-        paused = !playSound(oogachaka, true);
+        paused = false;
+        playSound(oogachaka[2]);
     }
 
 }
