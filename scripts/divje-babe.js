@@ -10,7 +10,7 @@ let sprintbar;
 let healthbarBcg;
 let distanceTravelled;
 let distanceSprinted;
-let protagonist;
+let protagonist = false;
 let volume = 1;
 let lastHowled;
 let numberOfSwings;
@@ -47,10 +47,11 @@ let wallTexture;
 let enemyTexture;
 let torchTexture;
 let flameTexture;
+let skyTexture;
 
 // Variable that stores  loading state of textures.
 let texturesLoaded = 0;
-let numOfTextures = 4;
+let numOfTextures = 5;
 
 // Keyboard handling helper variable for reading the status of keys
 const currentlyPressedKeys = {};
@@ -124,10 +125,11 @@ let torchWeapon;
 let lightObject;
 let lightObject2;
 let worldObject;
+let skyObject;
 
 //enemies
 let enemy;
-let enemies = [2, floor1, 2, -4.5, floor1, 3.5, -1.0, floor2, -4.0, -4.5, floor1, -4.5];
+let enemies = [2, floor1, 2, -4.5, floor1, 3.5, -1.0, floor2, -4.0, -1, floor2, 2, 4, floor1, 4];
 let enemyIndex;
 
 //light
@@ -318,6 +320,7 @@ function handleLoadedObjectData(data) {
     torchObject2.handleLoadedObject(1);
     lightObject.handleLoadedObject(1);
     lightObject2.handleLoadedObject(1);
+    skyObject.handleLoadedObject(1);
 
 
     document.getElementById("loadingtext").textContent = "";
@@ -450,19 +453,21 @@ function initGame() {
     numberOfEliminations = 0;
     paused = false;
     torchPicked = false;
+    enemyIndex = 0;
 
 
     xPosition = -4.5;
     protagonistYPosition = floor1 + 0.1;
     zPosition = -4.5;
+    playSound(oogachaka[2]);
 
     //for testing only
-    xPosition = -4.5;
-    protagonistYPosition = floor1 + 0.1;
-    zPosition = 4.5;
-    //playSound(oogachaka[2]);
+    /*
+    xPosition = -3;
+    protagonistYPosition = floor2 + 0.1;
+    zPosition = -3;
     torchPicked = true;
-
+    */
     //end testing
 
     updateHealth(maxBodyStatus);
@@ -694,6 +699,7 @@ function drawScene() {
     gl.uniform3f(shaderProgram.materialEmissiveColorUniform, 1.0, 1.0, 1.0);
     lightObject.draw();
     lightObject2.draw();
+    skyObject.draw();
 }
 
 //
@@ -709,6 +715,7 @@ function initObjects() {
     torchObject2 = new Object2(1 / 96, 1 / 6, 1 / 96, 1, floor1, 1, wallTexture, 5);
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, floor1, 2, flameTexture, 96);
     lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, floor1 + 1, 2, flameTexture, 96);
+    skyObject = new Object2(5, 5, 5, 0, floor2 + 1.3, 0, skyTexture, 1);
 
     //strop
     objects.push(new Object2(4, 0.5, 5, 1, floor1 + 2, 0, wallTexture, 5));
@@ -735,6 +742,22 @@ function initObjects() {
     objects.push(new Object2(0.25, 0.25, 0.25, -4.75, floor1 + 1, 1.25, wallTexture, 2));
 
     objects.push(new Object2(1, 0.25, 0.5, -4, floor1 + 2, -4.5, wallTexture, 1));
+
+    //FLOOR2
+
+    //strop
+    objects.push(new Object2(3, 0.1, 5, -2, floor2 + 1, 0, wallTexture, 5));
+
+    //walls
+    objects.push(new Object2(0.25, 0.5, 3, 1, floor2, -2, wallTexture, 5));
+    objects.push(new Object2(0.25, 0.5, 2, 1, floor2, 3.5, wallTexture, 5));
+
+    objects.push(new Object2(0.25, 0.75, 0.25, 1.5, floor2, 0.75, wallTexture, 5));
+    objects.push(new Object2(0.25, 0.75, 0.25, 1.5, floor2, 1.75, wallTexture, 5));
+    objects.push(new Object2(0.25, 0.75, 0.25, 2, floor2, 1.25, wallTexture, 5));
+
+    objects.push(new Object2(1.5, 0.5, 0.25, -0.75, floor2, 0.75, wallTexture, 1));
+
 
     enemy = new Enemy(2, floor1, 2);
 
@@ -827,6 +850,8 @@ function animate() {
         }
 
     }
+    handleAlternativeDeath();
+
     handleGravity(elapsed);
     handleCollisionDetectionWorldBorderProt();
     handleCollisionDetectionWorldBorderEnemy(enemy.object);
@@ -949,6 +974,9 @@ function handleKeyUp(event) {
 // input handling. Function continuisly updates helper variables.
 //
 function handleKeys() {
+    if (!protagonist)
+        return;
+
     if (currentlyPressedKeys[16]) {
         // Shift
         sprintChargingEnabled = false;
@@ -1065,6 +1093,8 @@ function start(debug = false) {
         enemyTexture = initTextures("./assets/wolf.jpg");
         torchTexture = initTextures("./assets/dirtwall.jpg");
         flameTexture = initTextures("./assets/flame.jpg");
+        skyTexture = initTextures("./assets/sky.jpg")
+
 
         // Initialise world objects
         //loadWorld();
@@ -1153,7 +1183,7 @@ function handleGravity(elapsedTime) {
     enemy.object.yPosition += elapsedTime * 0.012 * enemy.object.verticalVelocity;   // fiddle factor
 }
 
-function handleDeath() {
+function handleDeath(msg, success) {
     if (!protagonist)
         return;
 
@@ -1162,12 +1192,16 @@ function handleDeath() {
     pitchRate = 0.02;
     joggingPhase = 0;
     moveForward = -0.2;
-    playSound(dead);
+
+    if (!success)
+        playSound(dead);
     setTimeout(function () {
         moveForward = 0;
     }, 1500);
-    showStats(true, "Wasted", true);
-    protagonist = false;
+    showStats(true, msg, true);
+
+    if (!success)
+        protagonist = false;
 }
 
 function updateHealth(change) {
@@ -1208,7 +1242,7 @@ function updateHealth(change) {
     health = newHealth;
 
     if (health <= 0) {
-        handleDeath();
+        handleDeath("Eaten by a wolf!", false);
     }
     return health;
 }
@@ -1379,7 +1413,7 @@ function handleCollisionDetectionObjectProt(rock) {
     }
 
     // fix needed perhaps
-    if (protagonistYPosition + protagonistHeight > rock.yPosition - rock.height) {
+    if (protagonistYPosition + protagonistHeight + protagonistWidth > rock.yPosition - rock.height) {
         if (!rock.intersectsProt[2]) {
             rock.lastIntersectProt = 2;
             rock.intersectsProt[2] = true;
@@ -1423,7 +1457,7 @@ function handleCollisionDetectionObjectProt(rock) {
             xPosition = rock.xPosition + rock.widthX + protagonistWidth;
         } else if (rock.lastIntersectProt === 2) {
             verticalVelocity = 0.0;
-            protagonistYPosition = rock.yPosition - rock.height - protagonistHeight;
+            protagonistYPosition = rock.yPosition - rock.height - protagonistHeight - protagonistWidth;
         } else if (rock.lastIntersectProt === 3) {
             verticalVelocity = 0.0;
             protagonistYPosition = rock.yPosition + rock.height;
@@ -1557,7 +1591,9 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
     }
     if (distance < 2) {
         playSound(growl);
-        handleEnemyMovement(enemy.object, elapsedTime);
+
+        if (protagonist)
+            handleEnemyMovement(enemy.object, elapsedTime);
     } else if (distance < 3.5) {
         if (lastTime - lastHowled > 5000) {
             playSound(howl);
@@ -1569,9 +1605,9 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
         let distance2 = Math.sqrt((Math.pow(xLight - enemy.object.xPosition, 2)) + (Math.pow(zLight - enemy.object.zPosition, 2)) + (Math.pow(yLight - enemy.object.yPosition, 2))) - enemy.object.widthZ;
 
         //adjust this factor (should be zero)
-        if (distance2 < 0.2) {
+        if (distance2 < 0.15) {
             console.log("Enemy hit!");
-            enemy.inflictDamage(50);
+            enemy.inflictDamage(100);
             numberOfHitsEnemy += 1;
             playSound(hit, false, false);
         }
@@ -1612,15 +1648,26 @@ function respawnEnemy() {
     objects.push(enemy.object);
 
     if (enemyIndex < enemies.length / 3) {
-        //enemy = enemies[enemyIndex];
         enemy = new Enemy(enemies[enemyIndex * 3], enemies[enemyIndex * 3 + 1], enemies[enemyIndex * 3 + 2]);
-        console.log(enemies[enemyIndex * 3] + " " + enemies[enemyIndex * 3 + 1] + " " + enemies[enemyIndex * 3 + 2]);
+        //console.log(enemies[enemyIndex * 3] + " " + enemies[enemyIndex * 3 + 1] + " " + enemies[enemyIndex * 3 + 2]);
     }
 
 
 
 
     enemy.object.handleLoadedObject(1);
+}
+
+function handleAlternativeDeath() {
+    let distance = Math.sqrt(Math.pow(xPosition - 1.5, 2) + Math.pow(yPosition - 3.4, 2) + Math.pow(zPosition - 1.3, 2));
+
+    if (distance < 0.5) {
+        handleDeath("You made it to the surface!", true);
+    }
+
+    if (protagonistYPosition < yMin + 0.1) {
+        handleDeath("Fell to death!", false);
+    }
 }
 
 function matrikaKratVektor(out, m, a) {
