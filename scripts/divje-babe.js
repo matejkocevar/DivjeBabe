@@ -90,12 +90,13 @@ let protagonistWidth = 0.2;
 
 // HARDCODED
 // Where are the limits of our world
-const xMin = -5.0;
-const zMin = -5.0;
-const xMax = 5.0;
-const zMax = 5.0;
-const yMin = -1.0;
-const yMax = 1.0;
+const worldSize = 5.0;
+const xMin = -worldSize;
+const zMin = -worldSize;
+const xMax = worldSize;
+const zMax = worldSize;
+const yMin = 0.0;
+const yMax = yMin + 2;
 
 
 // on what Y position are protagonist's feet
@@ -157,7 +158,7 @@ Enemy.prototype.inflictDamage = function (damage) {
         numberOfEliminations += 1;
         respawnEnemy(2, yMin, 2);
     }
-}
+};
 
 let readDTO = {
     vertexPositions: [],
@@ -205,7 +206,7 @@ Object2.prototype.jump = function () {
     if (this.verticalVelocity === 0) {
         this.verticalVelocity = 0.3;
     }
-}
+};
 Object2.prototype.handleLoadedObject = function (normalDirection) {
 
     for (let i = 0; i < readDTO.vertexPositions.length; i++) {
@@ -665,23 +666,38 @@ function drawScene() {
 
 function initObjects() {
 
-    worldObject = new Object2(5, 5, 5, 0, yMin, 0, wallTexture, 2);
+    worldObject = new Object2(worldSize, worldSize, worldSize, 0, -worldSize, 0, wallTexture, 2);
     torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 5);
     lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
 
+    /*
     let numObjects = 6;
     for (let i = 0; i < numObjects; i++) {
         // Create new object and push it to the objects array...
         objects.push(new Object2(1 / 4, 1 / 4, 1 / 4, i - 3, yMin, -2, wallTexture, 2));
     }
+    */
+    //strop
+    objects.push(new Object2(5, 1, 5, 0, yMin + 2, 0, wallTexture, 1));
 
-    objects.push(new Object2(5, 1, 5, 0, 1, 0, wallTexture, 1));
-    objects.push(new Object2(3, 1, 1 / 4, -2, yMin, -3.75, wallTexture, 1));
+    //tla
+    //objects.push(new Object2(5, 1, 5, 0, yMin - 2, 0, wallTexture, 1));
+
+    objects.push(new Object2(5, 1, 1, 0, yMin - 2, -4, wallTexture, 1));
+    objects.push(new Object2(3, 1, 0.5, -1, yMin - 2, -2.5, wallTexture, 1));
+    objects.push(new Object2(1, 1, 0.5, 4, yMin - 2, -2.5, wallTexture, 1));
+
+    objects.push(new Object2(5, 1, 3.5, 0, yMin - 2, 1.5, wallTexture, 1));
+
+
+    //zid
+    objects.push(new Object2(4, 1, 0.5, -2, yMin, -3.5, wallTexture, 1));
+    objects.push(new Object2(1, 1, 2, 4, yMin, -3, wallTexture, 1));
+    objects.push(new Object2(0.5, 1, 1, 1.5, yMin, -2, wallTexture, 1));
 
     enemy = new Enemy(2, yMin, 2);
 
     objects[0].loadObject("./assets/cube.txt");
-    objects[numObjects - 1].yaw = 90;
 
     torchWeapon = new Weapon(0.08, -0.2, -0.18); //-0.18 is stable
 }
@@ -786,8 +802,8 @@ function animate() {
         torchObject.yaw = 0;
 
         torchObject.xPosition = 2;
-        torchObject.yPosition = -0.5;
-        torchObject.zPosition = -4.95;
+        torchObject.yPosition = yMin + 0.5;
+        torchObject.zPosition = zMin + 0.05;
     }
 
     let vektor = [0, torchObject.height + torchObject.widthX, 0, 1];
@@ -1483,7 +1499,7 @@ function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
         //adjust this factor (should be zero)
         if (distance2 < 0.2) {
             console.log("Enemy hit!");
-            enemy.inflictDamage(50)
+            enemy.inflictDamage(50);
             numberOfHitsEnemy += 1;
             playSound(hit, false, false);
         }
