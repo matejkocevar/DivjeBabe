@@ -127,7 +127,7 @@ let worldObject;
 
 //enemies
 let enemy;
-let enemies = [2, floor1, 2, -4.5, floor1, 3.5, 0.0, floor2, 0.0];
+let enemies = [2, floor1, 2, -4.5, floor1, 3.5, -1.0, floor2, -4.0, -4.5, floor1, -4.5];
 let enemyIndex;
 
 //light
@@ -453,7 +453,7 @@ function initGame() {
 
 
     xPosition = -4.5;
-    protagonistYPosition = floor1 + 2;
+    protagonistYPosition = floor1 + 0.1;
     zPosition = -4.5;
 
     //for testing only
@@ -461,6 +461,9 @@ function initGame() {
     protagonistYPosition = floor1 + 0.1;
     zPosition = 4.5;
     //playSound(oogachaka[2]);
+    torchPicked = true;
+
+    //end testing
 
     updateHealth(maxBodyStatus);
     showStats(false);
@@ -730,6 +733,8 @@ function initObjects() {
 
     objects.push(new Object2(0.25, 1, 1.25, -4.75, floor1, -0.25, wallTexture, 2));
     objects.push(new Object2(0.25, 0.25, 0.25, -4.75, floor1 + 1, 1.25, wallTexture, 2));
+
+    objects.push(new Object2(1, 0.25, 0.5, -4, floor1 + 2, -4.5, wallTexture, 1));
 
     enemy = new Enemy(2, floor1, 2);
 
