@@ -95,8 +95,9 @@ const xMin = -worldSize;
 const zMin = -worldSize;
 const xMax = worldSize;
 const zMax = worldSize;
-const yMin = 0.0;
-const yMax = yMin + 2;
+const floor1 = 0.0;
+const yMax = worldSize;
+const yMin = -worldSize;
 
 
 // on what Y position are protagonist's feet
@@ -163,7 +164,7 @@ Enemy.prototype.inflictDamage = function (damage) {
         this.alive = false;
         console.log("enemy ded");
         numberOfEliminations += 1;
-        respawnEnemy(2, yMin, 2);
+        respawnEnemy(2, floor1, 2);
     }
 };
 
@@ -342,11 +343,6 @@ Object2.prototype.draw = function () {
     vektor = matrikaKratVektor(vektor, matrix, vektor);
 
     gl.uniform3f(shaderProgram.pointLightingLocationUniform, vektor[0], vektor[1], vektor[2]);
-
-
-    mat4.identity(matrix);
-    mat4.rotate(matrix, degToRad(this.yaw), [0, 1, 0]);
-    mat4.rotate(matrix, degToRad(this.pitch), [1, 0, 0]);
 
     vektor = [xLight2 - this.xPosition, yLight2 - this.yPosition, zLight2 - this.zPosition, 1];
     vektor = matrikaKratVektor(vektor, matrix, vektor);
@@ -691,30 +687,30 @@ function drawScene() {
 function initObjects() {
 
     worldObject = new Object2(worldSize, worldSize, worldSize, 0, -worldSize, 0, wallTexture, 2);
-    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 5);
-    torchObject2 = new Object2(1 / 96, 1 / 6, 1 / 96, 1, yMin, 1, wallTexture, 5);
-    lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin, 2, flameTexture, 96);
-    lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, yMin + 1, 2, flameTexture, 96);
+    torchObject = new Object2(1 / 96, 1 / 6, 1 / 96, 1, floor1, 1, wallTexture, 5);
+    torchObject2 = new Object2(1 / 96, 1 / 6, 1 / 96, 1, floor1, 1, wallTexture, 5);
+    lightObject = new Object2(1 / 96, 1 / 96, 1 / 96, 2, floor1, 2, flameTexture, 96);
+    lightObject2 = new Object2(1 / 96, 1 / 96, 1 / 96, 2, floor1 + 1, 2, flameTexture, 96);
 
     //strop
-    objects.push(new Object2(5, 1, 5, 0, yMin + 2, 0, wallTexture, 1));
+    objects.push(new Object2(4, 0.5, 5, 1, floor1 + 2, 0, wallTexture, 1));
 
     //tla
-    //objects.push(new Object2(5, 1, 5, 0, yMin - 2, 0, wallTexture, 1));
+    //objects.push(new Object2(5, 1, 5, 0, floor1 - 2, 0, wallTexture, 1));
 
-    objects.push(new Object2(5, 1, 1, 0, yMin - 2, -4, wallTexture, 1));
-    objects.push(new Object2(3, 1, 0.5, -1, yMin - 2, -2.5, wallTexture, 1));
-    objects.push(new Object2(1, 1, 0.5, 4, yMin - 2, -2.5, wallTexture, 1));
+    objects.push(new Object2(5, 1, 1, 0, floor1 - 2, -4, wallTexture, 1));
+    objects.push(new Object2(3, 1, 0.5, -1, floor1 - 2, -2.5, wallTexture, 1));
+    objects.push(new Object2(1, 1, 0.5, 4, floor1 - 2, -2.5, wallTexture, 1));
 
-    objects.push(new Object2(5, 1, 3.5, 0, yMin - 2, 1.5, wallTexture, 1));
+    objects.push(new Object2(5, 1, 3.5, 0, floor1 - 2, 1.5, wallTexture, 1));
 
 
     //zid
-    objects.push(new Object2(4, 1, 0.5, -2, yMin, -3.5, wallTexture, 1));
-    objects.push(new Object2(1, 1, 2, 4, yMin, -3, wallTexture, 1));
-    objects.push(new Object2(1, 1, 1, 1, yMin, -2, wallTexture, 1));
+    objects.push(new Object2(4, 1, 0.5, -2, floor1, -3.5, wallTexture, 1));
+    objects.push(new Object2(1, 1, 2, 4, floor1, -3, wallTexture, 1));
+    objects.push(new Object2(1, 1, 1, 1, floor1, -2, wallTexture, 1));
 
-    enemy = new Enemy(2, yMin, 2);
+    enemy = new Enemy(2, floor1, 2);
 
     objects[0].loadObject("./assets/cube.txt");
 
@@ -726,7 +722,7 @@ function initObjects() {
     torchObject2.yaw = 0;
 
     torchObject2.xPosition = -4;
-    torchObject2.yPosition = yMin + 0.5;
+    torchObject2.yPosition = floor1 + 0.5;
     torchObject2.zPosition = zMax - 0.05;
 
     let vektor = [0, torchObject2.height + torchObject2.widthX, 0, 1];
@@ -849,7 +845,7 @@ function animate() {
         torchObject.yaw = -45;
 
         torchObject.xPosition = 2.02;
-        torchObject.yPosition = yMin + 0.5;
+        torchObject.yPosition = floor1 + 0.5;
         torchObject.zPosition = zMin + 0.98;
     }
 
@@ -913,7 +909,7 @@ function handleKeyUp(event) {
     if (event.keyCode === 70) {
         // F is pressed
 
-        let distance = Math.sqrt(Math.pow((xPosition - 2.02), 2) + Math.pow((yPosition - (yMin + 0.5)), 2) + Math.pow((zPosition - (zMin + 0.98)), 2));
+        let distance = Math.sqrt(Math.pow((xPosition - 2.02), 2) + Math.pow((yPosition - (floor1 + 0.5)), 2) + Math.pow((zPosition - (zMin + 0.98)), 2));
 
         if (distance < 0.7) {
             torchPicked = !torchPicked;
@@ -1518,7 +1514,7 @@ function handleCollisionDetectionObjectEnemy(rock, enemy) {
 
 function handleCollisionDetectionEnemy(enemy, changeHealth, elapsedTime) {
 
-    let distance = Math.sqrt((Math.pow(xPosition - enemy.object.xPosition, 2)) + (Math.pow(zPosition - enemy.object.zPosition, 2))) - protagonistWidth - enemy.object.widthZ;
+    let distance = Math.sqrt((Math.pow(xPosition - enemy.object.xPosition, 2)) + (Math.pow(zPosition - enemy.object.zPosition, 2)) + (Math.pow(yPosition - enemy.object.yPosition, 2))) - protagonistWidth - enemy.object.widthZ;
 
     if ((xPosition + protagonistWidth > enemy.object.xPosition - enemy.object.widthX) &&
         (xPosition - protagonistWidth < enemy.object.xPosition + enemy.object.widthX) &&
